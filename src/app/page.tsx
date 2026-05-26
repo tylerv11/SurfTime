@@ -1,65 +1,104 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import BreakMap from "@/components/map/BreakMap";
+import BreakCard from "@/components/breaks/BreakCard";
+import DailySummary from "@/components/briefing/DailySummary";
+
+export interface BreakCondition {
+  break_id: string;
+  break_name: string;
+  lat: number;
+  lng: number;
+  score: number | null;
+  rating: string;
+  wave_height_ft: number | null;
+  period_s: number | null;
+  wave_direction: string | null;
+  wind_quality: string;
+  wind_speed_mph: number;
+  wind_direction: string;
+  tide_stage: string;
+  water_temp_f: number | null;
+  briefing: string;
+  updated_at: string;
+}
+
+interface ConditionsData {
+  breaks: BreakCondition[];
+  daily_summary: string | null;
+  updated_at: string | null;
+}
 
 export default function Home() {
+  const [data, setData] = useState<ConditionsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [view, setView] = useState<"map" | "list">("map");
+
+  useEffect(() => {
+    fetch("/api/conditions")
+      .then((r) => r.json())
+      .then((d) => { setData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const selectedBreak = data?.breaks.find((b) => b.break_id === selected);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main className="min-h-screen bg-slate-900 text-white">
+      <header className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🏄</span>
+          <h1 className="text-xl font-bold tracking-tight">SurfTime</h1>
+          <span className="text-xs text-slate-400 hidden sm:block">SoCal Surf Conditions</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="flex items-center gap-3">
+          {data?.updated_at && (
+            <span className="text-xs text-slate-500">
+              Updated {new Date(data.updated_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
+          )}
+          <div className="flex rounded-lg overflow-hidden border border-slate-600">
+            <button className={`px-3 py-1 text-sm ${view === "map" ? "bg-blue-600" : "bg-slate-800"}`} onClick={() => setView("map")}>Map</button>
+            <button className={`px-3 py-1 text-sm ${view === "list" ? "bg-blue-600" : "bg-slate-800"}`} onClick={() => setView("list")}>List</button>
+          </div>
         </div>
-      </main>
-    </div>
+      </header>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-96">
+          <div className="text-slate-400 animate-pulse">Loading conditions...</div>
+        </div>
+      ) : !data ? (
+        <div className="flex items-center justify-center h-96">
+          <div className="text-slate-400">Failed to load conditions. Try again soon.</div>
+        </div>
+      ) : (
+        <>
+          {data.daily_summary && <DailySummary summary={data.daily_summary} />}
+          <div className="flex flex-col lg:flex-row h-[calc(100vh-120px)]">
+            <div className={`flex-1 ${view === "list" ? "hidden lg:block" : ""}`}>
+              <BreakMap breaks={data.breaks} selected={selected} onSelect={setSelected} />
+            </div>
+            <div className={`lg:w-96 overflow-y-auto border-l border-slate-700 ${view === "map" && !selected ? "hidden lg:block" : ""}`}>
+              {selected && selectedBreak ? (
+                <div className="p-4">
+                  <button className="text-sm text-blue-400 mb-3" onClick={() => setSelected(null)}>← All breaks</button>
+                  <BreakCard break_={selectedBreak} expanded />
+                </div>
+              ) : (
+                <div className="p-3 space-y-2">
+                  <p className="text-xs text-slate-500 px-1">{data.breaks.length} breaks · tap to explore</p>
+                  {data.breaks.map((b) => (
+                    <BreakCard key={b.break_id} break_={b} onSelect={() => setSelected(b.break_id)} />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </main>
   );
 }

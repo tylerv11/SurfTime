@@ -30,8 +30,24 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files — NEVER commit real keys
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.production
+# .env.example is safe to commit (no real keys)
+
+# local conditions cache (dev only)
+conditions.json
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
 
 # vercel
 .vercel
