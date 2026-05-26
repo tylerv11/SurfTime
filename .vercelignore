@@ -1,0 +1,6 @@
+python/
+scripts/
+conditions.json
+*.pyc
+__pycache__/
+.venv/
