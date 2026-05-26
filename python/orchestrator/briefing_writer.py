@@ -1,6 +1,6 @@
 """
 Subagent 5: Conditions Briefing Writer
-Uses OpenRouter (DeepSeek V3 Flash) to generate plain-English surf briefings.
+Uses OpenRouter (free tier) to generate plain-English surf briefings.
 Falls back to template-based briefings if no API key is set.
 """
 import os
@@ -8,7 +8,7 @@ import requests
 
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-MODEL = "deepseek/deepseek-chat"  # DeepSeek V3 via OpenRouter
+MODEL = "meta-llama/llama-3.3-70b-instruct:free"
 
 
 def generate_briefing(scored: dict, break_config: dict) -> str:
