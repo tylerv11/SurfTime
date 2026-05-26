@@ -48,10 +48,10 @@ interface ConditionsData {
 
 export type TimeWindow = "early_morning" | "morning" | "afternoon";
 
-const TIME_WINDOWS: { id: TimeWindow; label: string; hours: string; sliderVal: number }[] = [
-  { id: "early_morning", label: "Dawn",      hours: "5–8 am",    sliderVal: 0 },
-  { id: "morning",       label: "Morning",   hours: "8 am–12",   sliderVal: 1 },
-  { id: "afternoon",     label: "Afternoon", hours: "12–3 pm",   sliderVal: 2 },
+const TIME_WINDOWS: { id: TimeWindow; label: string; hours: string }[] = [
+  { id: "early_morning", label: "Dawn", hours: "5–8 am" },
+  { id: "morning", label: "Morning", hours: "8 am–12 pm" },
+  { id: "afternoon", label: "Afternoon", hours: "12–3 pm" },
 ];
 
 const REGION_FILTERS: { id: string; label: string; regions: string[] }[] = [
@@ -126,7 +126,6 @@ export default function Home() {
   const [regionFilter, setRegionFilter] = useState("all");
   const [sortBy, setSortBy] = useState<SortBy>("score");
 
-  const sliderIdx = TIME_WINDOWS.findIndex((w) => w.id === timeWindow);
   const relativeTime = useRelativeTime(data?.updated_at ?? null);
 
   const fetchData = useCallback((isBackground = false) => {
@@ -163,19 +162,23 @@ export default function Home() {
     .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
     .slice(0, 4);
 
-  const activeWindow = TIME_WINDOWS[sliderIdx];
-
   return (
     <main className="min-h-screen bg-slate-950 text-white flex flex-col">
       {/* Header */}
       <header className="px-4 py-3 border-b border-slate-800 flex items-center justify-between flex-shrink-0 bg-slate-950/95 backdrop-blur z-10">
         <div className="flex items-center gap-3 min-w-0">
-          <pre className="hidden lg:block text-[9px] leading-tight text-blue-500/50 font-mono select-none flex-shrink-0">
-            {`  ~  ~~~  ~\n )) surf ((\n  ~  ~~~  ~`}
+          <pre className="hidden lg:block text-[9px] leading-tight text-cyan-400/55 font-mono select-none flex-shrink-0">
+            {`     |\\
+    /|.\\
+   /_|_\\\\      SURF
+ ____|____     TIME
+ \\_o_o_o_/`}
           </pre>
           <div className="min-w-0">
             <h1 className="text-base font-bold tracking-tight leading-none font-mono">SurfTime</h1>
-            <p className="text-[11px] text-slate-500 leading-none mt-0.5 hidden sm:block tracking-wide uppercase">CA Surf Conditions</p>
+            <p className="text-[11px] text-slate-500 leading-none mt-0.5 hidden sm:block tracking-[0.22em] uppercase">
+              California Surf Conditions
+            </p>
           </div>
         </div>
 
@@ -192,7 +195,7 @@ export default function Home() {
             target="_blank"
             rel="noopener noreferrer"
             className="p-1.5 rounded-md text-slate-500 hover:text-slate-200 hover:bg-slate-800 transition-colors"
-            title="GitHub (private)"
+            title="GitHub repository"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
@@ -244,65 +247,6 @@ export default function Home() {
           {data.daily_summary && (
             <DailySummary summary={data.daily_summary} updatedAt={data.updated_at} />
           )}
-
-          {/* Time-of-day slider */}
-          <div className="px-4 py-3 border-b border-slate-800 bg-slate-950 flex-shrink-0">
-            <div className="flex items-center gap-4 max-w-2xl">
-              <div className="flex-shrink-0 w-28 hidden sm:block">
-                <div className="text-xs font-semibold text-slate-200 font-mono">{activeWindow.label}</div>
-                <div className="text-[10px] text-slate-500">{activeWindow.hours}</div>
-              </div>
-
-              <div className="flex-1 relative">
-                <div className="flex justify-between mb-1.5 px-0.5">
-                  {TIME_WINDOWS.map((w, i) => (
-                    <button
-                      key={w.id}
-                      onClick={() => setTimeWindow(w.id)}
-                      className={`flex flex-col items-center transition-all ${
-                        sliderIdx === i ? "text-white" : "text-slate-500 hover:text-slate-300"
-                      }`}
-                    >
-                      <span className={`text-[10px] font-mono font-medium ${sliderIdx === i ? "text-blue-400" : ""}`}>{w.label}</span>
-                      <span className="text-[9px] text-slate-600 mt-0.5">{w.hours}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="relative h-5 flex items-center">
-                  <div className="absolute inset-x-0 h-px bg-slate-700" />
-                  <div
-                    className="absolute h-px bg-blue-500 transition-all duration-200"
-                    style={{ width: `${(sliderIdx / 2) * 100}%` }}
-                  />
-                  {TIME_WINDOWS.map((_, i) => (
-                    <div
-                      key={i}
-                      className={`absolute w-2 h-2 rounded-full border transition-all duration-200 ${
-                        i <= sliderIdx ? "bg-blue-500 border-blue-400" : "bg-slate-800 border-slate-600"
-                      }`}
-                      style={{ left: `calc(${(i / 2) * 100}% - 4px)` }}
-                    />
-                  ))}
-                  <input
-                    type="range" min={0} max={2} step={1} value={sliderIdx}
-                    onChange={(e) => setTimeWindow(TIME_WINDOWS[Number(e.target.value)].id)}
-                    className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
-                  />
-                </div>
-              </div>
-
-              {data.updated_at && (
-                <div className="flex-shrink-0 text-right hidden sm:block" title={formatAbsoluteTime(data.updated_at)}>
-                  <div className="flex items-center gap-1 justify-end">
-                    <span className={`w-1.5 h-1.5 rounded-full ${refreshing ? "bg-yellow-400 animate-pulse" : "bg-emerald-500"}`} />
-                    <span className="text-[10px] text-slate-500">Pulled {relativeTime}</span>
-                  </div>
-                  <div className="text-[10px] text-slate-600">{formatAbsoluteTime(data.updated_at)}</div>
-                </div>
-              )}
-            </div>
-          </div>
 
           {/* Best breaks row (map view only) */}
           {view === "map" && bestBreaks.length > 0 && (
@@ -386,10 +330,25 @@ export default function Home() {
                     </button>
                   ))}
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-slate-600 uppercase tracking-wide">Sort</span>
-                  {(["score", "wave_height"] as SortBy[]).map((s) => (
-                    <button
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-slate-600 uppercase tracking-wide">Time</span>
+                {TIME_WINDOWS.map((window) => (
+                  <button
+                    key={window.id}
+                    onClick={() => setTimeWindow(window.id)}
+                    className={`text-xs px-2.5 py-1 rounded-sm border font-mono transition-colors ${
+                      timeWindow === window.id
+                        ? "bg-slate-700 border-slate-600 text-white"
+                        : "bg-slate-900 border-slate-800 text-slate-500 hover:text-white"
+                    }`}
+                    title={window.hours}
+                  >
+                    {window.label}
+                  </button>
+                ))}
+                <span className="text-[10px] text-slate-600 uppercase tracking-wide">Sort</span>
+                {(["score", "wave_height"] as SortBy[]).map((s) => (
+                  <button
                       key={s}
                       onClick={() => setSortBy(s)}
                       className={`text-xs px-2.5 py-1 rounded-sm border font-mono transition-colors ${
