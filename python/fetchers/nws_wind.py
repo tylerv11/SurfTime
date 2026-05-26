@@ -4,6 +4,7 @@ Free, no API key required.
 """
 import requests
 from datetime import datetime, timezone
+from typing import Optional
 
 
 NWS_FORECAST_URL = "https://api.weather.gov/gridpoints/{office}/{x},{y}/forecast/hourly"
@@ -56,7 +57,7 @@ def fetch_wind(office: str, x: int, y: int) -> dict:
     }
 
 
-def _find_period_for_hour(periods: list, target_hour: int) -> dict | None:
+def _find_period_for_hour(periods: list, target_hour: int) -> Optional[dict]:
     """Find forecast period closest to target hour, preferring today's date."""
     today = datetime.now().strftime("%Y-%m-%d")
     # First pass: exact match on today

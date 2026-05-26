@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { BreakCondition } from "@/app/page";
 
 const RATING_HEX: Record<string, string> = {
@@ -43,6 +43,7 @@ export default function BreakMap({ breaks, selected, onSelect }: Props) {
   const mapInstanceRef = useRef<any>(null);
   const leafletRef = useRef<any>(null);
   const markersRef = useRef<{ id: string; marker: any; b: BreakCondition }[]>([]);
+  const [mapReady, setMapReady] = useState(false);
 
   // Init map once
   useEffect(() => {
@@ -65,6 +66,7 @@ export default function BreakMap({ breaks, selected, onSelect }: Props) {
       }).addTo(map);
 
       mapInstanceRef.current = map;
+      setMapReady(true);
 
       breaks.forEach((b) => {
         const color = RATING_HEX[b.rating] ?? "#64748b";
@@ -108,6 +110,7 @@ export default function BreakMap({ breaks, selected, onSelect }: Props) {
       mapInstanceRef.current = null;
       markersRef.current = [];
       leafletRef.current = null;
+      setMapReady(false);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -151,10 +154,18 @@ export default function BreakMap({ breaks, selected, onSelect }: Props) {
 
   // Pan to selected break
   useEffect(() => {
-    if (!selected || !mapInstanceRef.current) return;
+    if (!selected || !mapInstanceRef.current || !mapReady) return;
     const brk = breaks.find((b) => b.break_id === selected);
-    if (brk) mapInstanceRef.current.setView([brk.lat, brk.lng], 12, { animate: true });
-  }, [selected, breaks]);
+    if (!brk) return;
+
+    mapInstanceRef.current.flyTo([brk.lat, brk.lng], 12, {
+      animate: true,
+      duration: 0.8,
+    });
+
+    const selectedMarker = markersRef.current.find((marker) => marker.id === selected);
+    selectedMarker?.marker.openPopup();
+  }, [selected, breaks, mapReady]);
 
   return (
     <>

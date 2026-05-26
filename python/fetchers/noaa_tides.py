@@ -87,7 +87,7 @@ def fetch_tides(station_id: str) -> dict:
     }
 
 
-def _find_hourly_prediction(predictions: list, target_hour: int) -> dict | None:
+def _find_hourly_prediction(predictions: list, target_hour: int) -> Optional[dict]:
     """Find hourly prediction closest to target hour."""
     best, best_diff = None, float("inf")
     for p in predictions:

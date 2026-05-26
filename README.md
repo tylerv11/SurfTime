@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SurfTime
 
-## Getting Started
+California surf conditions app built with Next.js, Supabase, and a daily Python data pipeline.
 
-First, run the development server:
+## Canonical URL
+
+Production app: `https://surftimeca.vercel.app`
+
+Use this as the single public SurfTime link going forward.
+
+## Stack
+
+- Next.js 16 App Router with TypeScript
+- Supabase Postgres for `conditions` and `daily_summaries`
+- Python fetch/orchestration pipeline in `python/`
+- Vercel for hosting and production deploys
+- GitHub connected to Vercel for deploys on push to `main`
+
+## Data Flow
+
+1. Python fetchers pull buoy, wind, and tide inputs.
+2. The orchestrator scores each break and writes rows into Supabase.
+3. `src/app/api/conditions/route.ts` reads live data from Supabase at runtime.
+4. The Next.js frontend renders the map, list view, and daily summary.
+
+## Local Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Required local env vars:
 
-## Learn More
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `OPENROUTER_API_KEY`
+- `CRON_SECRET`
+- `NEXT_PUBLIC_SITE_URL=https://surftimeca.vercel.app`
 
-To learn more about Next.js, take a look at the following resources:
+## Deployment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Do not use ad hoc CLI deploys for this project.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Use GitHub pushes to `main` so Vercel handles production deploys for the linked `surftime` project.

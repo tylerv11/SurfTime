@@ -30,29 +30,39 @@ def fetch_buoy(buoy_id: str) -> dict:
         return {"error": f"No data for buoy {buoy_id}"}
 
     headers = lines[0].lstrip("#").split()
-    data = lines[2].split()
+    rows = [line.split() for line in lines[2:] if line.strip()]
 
-    def get(col_name):
+    def get_from_row(row, col_name):
         if col_name in headers:
             idx = headers.index(col_name)
-            val = data[idx] if idx < len(data) else "MM"
+            val = row[idx] if idx < len(row) else "MM"
             return None if val == "MM" else float(val)
         return None
 
-    wvht_m = get("WVHT")
-    mwd = get("MWD")
+    def get_latest(col_name):
+        for row in rows:
+            value = get_from_row(row, col_name)
+            if value is not None:
+                return value
+        return None
+
+    wvht_m = get_latest("WVHT")
+    mwd = get_latest("MWD")
+    dominant_period = get_latest("DPD")
+    avg_period = get_latest("APD")
+    water_temp_c = get_latest("WTMP")
 
     return {
         "buoy_id": buoy_id,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "wave_height_m": wvht_m,
         "wave_height_ft": round(wvht_m * 3.281, 1) if wvht_m else None,
-        "dominant_period_s": get("DPD"),
-        "avg_period_s": get("APD"),
+        "dominant_period_s": dominant_period,
+        "avg_period_s": avg_period,
         "wave_direction_deg": mwd,
         "wave_direction_cardinal": deg_to_cardinal(mwd) if mwd else None,
-        "water_temp_c": get("WTMP"),
-        "water_temp_f": round(get("WTMP") * 9/5 + 32, 1) if get("WTMP") else None,
+        "water_temp_c": water_temp_c,
+        "water_temp_f": round(water_temp_c * 9/5 + 32, 1) if water_temp_c else None,
     }
 
 
