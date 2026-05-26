@@ -267,9 +267,127 @@
       "notes": "State beach with a solid right-hander. Scenic, less crowded. Good alternative to Malibu."
     }
   ],
+    {
+      "id": "pismo",
+      "name": "Pismo Beach",
+      "lat": 35.1427,
+      "lng": -120.6413,
+      "noaa_buoy": "46011",
+      "nws_grid": { "office": "LOX", "x": 78, "y": 108 },
+      "tide_station": "9412110",
+      "ideal": {
+        "swell_direction": ["SW", "W", "NW"],
+        "min_height_ft": 3,
+        "max_height_ft": 10,
+        "period_min_s": 12,
+        "tide": "any",
+        "wind": "NE",
+        "wind_max_mph": 12
+      },
+      "notes": "Beach break with peaks scattered along the coast. Picks up W and SW swell well. Fun and uncrowded compared to SoCal."
+    },
+    {
+      "id": "morro-bay",
+      "name": "Morro Bay",
+      "lat": 35.3669,
+      "lng": -120.8497,
+      "noaa_buoy": "46011",
+      "nws_grid": { "office": "LOX", "x": 72, "y": 120 },
+      "tide_station": "9412110",
+      "ideal": {
+        "swell_direction": ["NW", "W", "WNW"],
+        "min_height_ft": 4,
+        "max_height_ft": 12,
+        "period_min_s": 14,
+        "tide": "mid-high",
+        "wind": "NE",
+        "wind_max_mph": 10
+      },
+      "notes": "Rock point breaks with dramatic scenery. Morro Rock shelters some spots from NW winds. Needs solid groundswell."
+    },
+    {
+      "id": "steamer-lane",
+      "name": "Steamer Lane",
+      "lat": 36.9513,
+      "lng": -122.0267,
+      "noaa_buoy": "46042",
+      "nws_grid": { "office": "MTR", "x": 91, "y": 66 },
+      "tide_station": "9413450",
+      "ideal": {
+        "swell_direction": ["NW", "WNW", "W"],
+        "min_height_ft": 4,
+        "max_height_ft": 15,
+        "period_min_s": 14,
+        "tide": "mid",
+        "wind": "NE",
+        "wind_max_mph": 10
+      },
+      "notes": "Santa Cruz's crown jewel. Left-hand point with multiple sections. World Surf League event site. Needs NW groundswell. Cold water, sea lions."
+    },
+    {
+      "id": "mavericks",
+      "name": "Mavericks",
+      "lat": 37.4956,
+      "lng": -122.5032,
+      "noaa_buoy": "46042",
+      "nws_grid": { "office": "MTR", "x": 79, "y": 93 },
+      "tide_station": "9414131",
+      "ideal": {
+        "swell_direction": ["NW", "WNW"],
+        "min_height_ft": 10,
+        "max_height_ft": 40,
+        "period_min_s": 15,
+        "tide": "mid",
+        "wind": "NE",
+        "wind_max_mph": 10
+      },
+      "notes": "World-famous big wave spot at Pillar Point. Only breaks on massive NW groundswell 15s+ period. Expert surfers only. Watch-only on smaller days."
+    },
+    {
+      "id": "linda-mar",
+      "name": "Linda Mar (Pacifica)",
+      "lat": 37.6155,
+      "lng": -122.4872,
+      "noaa_buoy": "46042",
+      "nws_grid": { "office": "MTR", "x": 81, "y": 99 },
+      "tide_station": "9414290",
+      "ideal": {
+        "swell_direction": ["NW", "W", "WNW"],
+        "min_height_ft": 3,
+        "max_height_ft": 10,
+        "period_min_s": 10,
+        "tide": "low-mid",
+        "wind": "NE",
+        "wind_max_mph": 12
+      },
+      "notes": "Pacifica's main beach break. Consistent and forgiving. Popular with SF-area surfers. Gets foggy. Tends to be mushy but fun."
+    },
+    {
+      "id": "ocean-beach-sf",
+      "name": "Ocean Beach (SF)",
+      "lat": 37.7697,
+      "lng": -122.5103,
+      "noaa_buoy": "46026",
+      "nws_grid": { "office": "MTR", "x": 81, "y": 106 },
+      "tide_station": "9414290",
+      "ideal": {
+        "swell_direction": ["NW", "WNW", "W"],
+        "min_height_ft": 4,
+        "max_height_ft": 12,
+        "period_min_s": 12,
+        "tide": "mid",
+        "wind": "NE",
+        "wind_max_mph": 10
+      },
+      "notes": "San Francisco's main beach break. Powerful and unpredictable. Strong rips, cold water, frequent fog. For experienced surfers only. Iconic backdrop of the city."
+    }
+  ],
   "buoys": {
     "46025": { "name": "Santa Monica Basin", "lat": 33.749, "lng": -119.053 },
     "46086": { "name": "San Clemente Basin", "lat": 32.491, "lng": -118.034 },
-    "46054": { "name": "West Santa Barbara", "lat": 34.274, "lng": -120.459 }
+    "46054": { "name": "West Santa Barbara", "lat": 34.274, "lng": -120.459 },
+    "46011": { "name": "Santa Maria Basin", "lat": 34.956, "lng": -120.966 },
+    "46042": { "name": "Monterey Bay", "lat": 36.785, "lng": -122.469 },
+    "46026": { "name": "San Francisco Bar", "lat": 37.759, "lng": -122.843 }
   }
 }

@@ -50,11 +50,31 @@ def run_all():
             scored = score_break(brk, buoy_data, wind_data, tide_data)
             briefing = generate_briefing(scored, brk)
 
+            # Score each time window using window-specific wind + tide
+            time_windows = {}
+            for window_id in ("early_morning", "morning", "afternoon"):
+                wind_win = wind_data.get("time_windows", {}).get(window_id)
+                tide_win = tide_data.get("time_windows", {}).get(window_id)
+                if wind_win and tide_win:
+                    win_wind = {**wind_data, **wind_win}
+                    win_tide = {**tide_data, **tide_win}
+                    win_scored = score_break(brk, buoy_data, win_wind, win_tide)
+                    time_windows[window_id] = {
+                        "score": win_scored["score"],
+                        "rating": win_scored["rating"],
+                        "wind_quality": win_wind["wind_quality"],
+                        "wind_speed_mph": win_wind["wind_speed_mph"],
+                        "wind_direction": win_wind["wind_direction"],
+                        "tide_stage": win_tide["tide_stage"],
+                        "tide_height_ft": tide_win.get("current_height_ft"),
+                    }
+
             result = {
                 **scored,
                 "briefing": briefing,
                 "lat": brk["lat"],
                 "lng": brk["lng"],
+                "time_windows": time_windows,
                 "updated_at": datetime.now(timezone.utc).isoformat(),
             }
             results.append(result)

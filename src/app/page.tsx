@@ -5,6 +5,16 @@ import BreakMap from "@/components/map/BreakMap";
 import BreakCard from "@/components/breaks/BreakCard";
 import DailySummary from "@/components/briefing/DailySummary";
 
+export interface TimeWindowData {
+  score: number | null;
+  rating: string;
+  wind_quality: string;
+  wind_speed_mph: number;
+  wind_direction: string;
+  tide_stage: string;
+  tide_height_ft: number | null;
+}
+
 export interface BreakCondition {
   break_id: string;
   break_name: string;
@@ -22,12 +32,32 @@ export interface BreakCondition {
   water_temp_f: number | null;
   briefing: string;
   updated_at: string;
+  time_windows?: {
+    early_morning?: TimeWindowData;
+    morning?: TimeWindowData;
+    afternoon?: TimeWindowData;
+  };
 }
 
 interface ConditionsData {
   breaks: BreakCondition[];
   daily_summary: string | null;
   updated_at: string | null;
+}
+
+export type TimeWindow = "early_morning" | "morning" | "afternoon";
+
+const TIME_WINDOWS: { id: TimeWindow; label: string; shortLabel: string; hours: string }[] = [
+  { id: "early_morning", label: "Early Morning", shortLabel: "Dawn", hours: "5–8am" },
+  { id: "morning", label: "Morning", shortLabel: "Morning", hours: "8–12pm" },
+  { id: "afternoon", label: "Afternoon", shortLabel: "Arvo", hours: "12–3pm" },
+];
+
+function getDefaultWindow(): TimeWindow {
+  const h = new Date().getHours();
+  if (h < 8) return "early_morning";
+  if (h < 12) return "morning";
+  return "afternoon";
 }
 
 function useRelativeTime(isoString: string | null) {
@@ -50,12 +80,40 @@ function useRelativeTime(isoString: string | null) {
   return label;
 }
 
+function formatAbsoluteTime(isoString: string | null): string {
+  if (!isoString) return "";
+  const d = new Date(isoString);
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZoneName: "short",
+  });
+}
+
+export function getBreakForWindow(b: BreakCondition, window: TimeWindow): BreakCondition {
+  const win = b.time_windows?.[window];
+  if (!win) return b;
+  return {
+    ...b,
+    score: win.score,
+    rating: win.rating,
+    wind_quality: win.wind_quality,
+    wind_speed_mph: win.wind_speed_mph,
+    wind_direction: win.wind_direction,
+    tide_stage: win.tide_stage,
+  };
+}
+
 export default function Home() {
   const [data, setData] = useState<ConditionsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [view, setView] = useState<"map" | "list">("map");
+  const [timeWindow, setTimeWindow] = useState<TimeWindow>(getDefaultWindow());
 
   const relativeTime = useRelativeTime(data?.updated_at ?? null);
 
@@ -71,17 +129,17 @@ export default function Home() {
 
   useEffect(() => {
     fetchData();
-    // Auto-refresh every 10 minutes
     const id = setInterval(() => fetchData(true), 10 * 60 * 1000);
     return () => clearInterval(id);
   }, [fetchData]);
 
-  const selectedBreak = data?.breaks.find((b) => b.break_id === selected);
+  const windowedBreaks = data?.breaks.map((b) => getBreakForWindow(b, timeWindow)) ?? [];
+  const selectedBreak = windowedBreaks.find((b) => b.break_id === selected);
 
-  const bestBreaks = data?.breaks
+  const bestBreaks = windowedBreaks
     .filter((b) => b.rating === "epic" || b.rating === "good")
     .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-    .slice(0, 3) ?? [];
+    .slice(0, 3);
 
   return (
     <main className="min-h-screen bg-slate-900 text-white flex flex-col">
@@ -91,14 +149,13 @@ export default function Home() {
           <span className="text-2xl">🏄</span>
           <div>
             <h1 className="text-lg font-bold tracking-tight leading-none">SurfTime</h1>
-            <p className="text-xs text-slate-500 leading-none mt-0.5">SoCal Surf Conditions</p>
+            <p className="text-xs text-slate-500 leading-none mt-0.5">CA Surf Conditions</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Last fetched indicator */}
           {data?.updated_at && (
-            <div className="hidden sm:flex items-center gap-1.5 text-xs">
+            <div className="hidden sm:flex items-center gap-1.5 text-xs" title={formatAbsoluteTime(data.updated_at)}>
               <span className={`w-2 h-2 rounded-full flex-shrink-0 ${refreshing ? "bg-yellow-400 animate-pulse" : "bg-green-500"}`} />
               <span className="text-slate-400">Updated {relativeTime}</span>
             </div>
@@ -150,7 +207,40 @@ export default function Home() {
             <DailySummary summary={data.daily_summary} updatedAt={data.updated_at} />
           )}
 
-          {/* Best breaks chips (mobile) */}
+          {/* Time window selector */}
+          <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-700/50 flex-shrink-0 bg-slate-900/80">
+            <span className="text-xs text-slate-500 hidden sm:block whitespace-nowrap">View:</span>
+            <div className="flex gap-1.5 flex-1">
+              {TIME_WINDOWS.map((w) => (
+                <button
+                  key={w.id}
+                  onClick={() => setTimeWindow(w.id)}
+                  className={`flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-medium transition-all border ${
+                    timeWindow === w.id
+                      ? "bg-blue-600/90 border-blue-500 text-white shadow-sm shadow-blue-500/30"
+                      : "bg-slate-800/70 border-slate-600/40 text-slate-400 hover:text-slate-200 hover:border-slate-500"
+                  }`}
+                >
+                  <span className="sm:hidden">{w.shortLabel}</span>
+                  <span className="hidden sm:inline">{w.label}</span>
+                  <span className="ml-1 opacity-60">{w.hours}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Last pulled — always visible */}
+            {data.updated_at && (
+              <div className="flex items-center gap-1.5 ml-auto text-xs shrink-0" title={formatAbsoluteTime(data.updated_at)}>
+                <span className={`w-1.5 h-1.5 rounded-full ${refreshing ? "bg-yellow-400 animate-pulse" : "bg-green-500"}`} />
+                <span className="text-slate-400 hidden md:block">
+                  Data from <span className="text-slate-300 font-medium">{formatAbsoluteTime(data.updated_at)}</span>
+                </span>
+                <span className="text-slate-400 md:hidden">{relativeTime}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Best breaks chips */}
           {bestBreaks.length > 0 && (
             <div className="flex gap-2 px-3 py-2 overflow-x-auto border-b border-slate-700/40 flex-shrink-0 lg:hidden">
               <span className="text-xs text-slate-500 self-center whitespace-nowrap">Best now:</span>
@@ -174,7 +264,7 @@ export default function Home() {
           <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
             {/* Map pane */}
             <div className={`flex-1 overflow-hidden ${view === "list" ? "hidden lg:block" : ""}`}>
-              <BreakMap breaks={data.breaks} selected={selected} onSelect={setSelected} />
+              <BreakMap breaks={windowedBreaks} selected={selected} onSelect={setSelected} />
             </div>
 
             {/* Sidebar */}
@@ -194,20 +284,21 @@ export default function Home() {
                     </svg>
                     All breaks
                   </button>
-                  <BreakCard break_={selectedBreak} expanded />
+                  <BreakCard break_={selectedBreak} expanded timeWindow={timeWindow} />
                 </div>
               ) : (
                 <div className="p-3 space-y-2">
                   <p className="text-xs text-slate-500 px-1 py-1">
-                    {data.breaks.length} breaks · tap a pin or name to explore
+                    {windowedBreaks.length} breaks · sorted by score
                   </p>
-                  {[...data.breaks]
+                  {[...windowedBreaks]
                     .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
                     .map((b) => (
                       <BreakCard
                         key={b.break_id}
                         break_={b}
                         onSelect={() => { setSelected(b.break_id); setView("map"); }}
+                        timeWindow={timeWindow}
                       />
                     ))}
                 </div>
@@ -215,11 +306,11 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Mobile last-updated footer */}
+          {/* Mobile footer: last pulled */}
           {data.updated_at && (
             <div className="sm:hidden flex items-center justify-center gap-2 py-2 border-t border-slate-700/40 text-xs text-slate-500">
               <span className={`w-1.5 h-1.5 rounded-full ${refreshing ? "bg-yellow-400 animate-pulse" : "bg-green-500"}`} />
-              Data updated {relativeTime}
+              Pulled {relativeTime} · {formatAbsoluteTime(data.updated_at)}
             </div>
           )}
         </div>

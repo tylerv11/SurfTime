@@ -4,18 +4,21 @@ Free, no API key required.
 """
 from __future__ import annotations
 import requests
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from typing import Optional
 
 
 TIDES_URL = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+
+TIME_WINDOW_HOURS = {"early_morning": 6, "morning": 10, "afternoon": 14}
 
 
 def fetch_tides(station_id: str) -> dict:
     now = datetime.now(timezone.utc)
     today = now.strftime("%Y%m%d")
 
-    params = {
+    # Fetch hourly predictions for the full day (used for both hilo analysis and windows)
+    hourly_params = {
         "product": "predictions",
         "application": "SurfTime",
         "begin_date": today,
@@ -23,26 +26,45 @@ def fetch_tides(station_id: str) -> dict:
         "datum": "MLLW",
         "station": station_id,
         "time_zone": "lst_ldt",
-        "interval": "hilo",  # High/low only
+        "interval": "h",
         "units": "english",
         "format": "json",
     }
-
-    resp = requests.get(TIDES_URL, params=params, timeout=10)
+    resp = requests.get(TIDES_URL, params=hourly_params, timeout=10)
     resp.raise_for_status()
-    data = resp.json()
+    hourly_data = resp.json()
 
-    if "predictions" not in data:
+    hourly_preds = hourly_data.get("predictions", [])
+
+    # Also fetch hi/lo for tide stage context
+    hilo_params = {**hourly_params, "interval": "hilo"}
+    try:
+        hilo_resp = requests.get(TIDES_URL, params=hilo_params, timeout=10)
+        hilo_preds = hilo_resp.json().get("predictions", [])
+    except Exception:
+        hilo_preds = []
+
+    if not hourly_preds:
         return {"error": f"No tide data for station {station_id}"}
 
-    predictions = data["predictions"]
     current_height = fetch_current_height(station_id, today)
+    tide_stage = classify_tide(current_height, hourly_preds)
 
-    # Find next high and low
-    next_high = next((p for p in predictions if p["type"] == "H"), None)
-    next_low = next((p for p in predictions if p["type"] == "L"), None)
+    next_high = next((p for p in hilo_preds if p["type"] == "H"), None)
+    next_low = next((p for p in hilo_preds if p["type"] == "L"), None)
 
-    tide_stage = classify_tide(current_height, predictions)
+    # Build time windows
+    time_windows = {}
+    for window_id, target_hour in TIME_WINDOW_HOURS.items():
+        best = _find_hourly_prediction(hourly_preds, target_hour)
+        if best:
+            height = float(best["v"])
+            time_windows[window_id] = {
+                "current_height_ft": round(height, 2),
+                "tide_stage": classify_tide(height, hourly_preds),
+            }
+        else:
+            time_windows[window_id] = {"tide_stage": "unknown", "current_height_ft": None}
 
     return {
         "station_id": station_id,
@@ -58,10 +80,26 @@ def fetch_tides(station_id: str) -> dict:
             "height_ft": float(next_low["v"])
         } if next_low else None,
         "all_predictions": [
-            {"time": p["t"], "height_ft": float(p["v"]), "type": p["type"]}
-            for p in predictions
+            {"time": p["t"], "height_ft": float(p["v"])}
+            for p in hourly_preds
         ],
+        "time_windows": time_windows,
     }
+
+
+def _find_hourly_prediction(predictions: list, target_hour: int) -> dict | None:
+    """Find hourly prediction closest to target hour."""
+    best, best_diff = None, float("inf")
+    for p in predictions:
+        try:
+            # Time format: "2026-05-26 06:00"
+            hour = int(p["t"][11:13])
+            diff = abs(hour - target_hour)
+            if diff < best_diff:
+                best_diff, best = diff, p
+        except (ValueError, IndexError, KeyError):
+            continue
+    return best
 
 
 def fetch_current_height(station_id: str, date: str) -> Optional[float]:

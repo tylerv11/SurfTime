@@ -53,8 +53,8 @@ export default function BreakMap({ breaks, selected, onSelect }: Props) {
       delete (L.Icon.Default.prototype as any)._getIconUrl;
 
       const map = L.map(mapRef.current!, {
-        center: [33.85, -118.5],
-        zoom: 9,
+        center: [36.0, -121.0],
+        zoom: 7,
         zoomControl: true,
       });
 
@@ -78,25 +78,9 @@ export default function BreakMap({ breaks, selected, onSelect }: Props) {
           iconAnchor: [size / 2, size / 2],
         });
 
-        const waveInfo = b.wave_height_ft
-          ? `${b.wave_height_ft}ft${b.period_s ? ` @ ${b.period_s}s` : ""}`
-          : "No wave data";
-
-        const popup = `
-          <div style="font-family:system-ui,sans-serif;min-width:180px;max-width:220px">
-            <div style="font-weight:700;font-size:14px;margin-bottom:3px">${b.break_name}</div>
-            <div style="color:${color};font-weight:600;font-size:13px">${RATING_LABEL[b.rating] ?? b.rating} · ${b.score ?? "??"}⁄10</div>
-            <div style="color:#94a3b8;font-size:12px;margin-top:6px;line-height:1.7">
-              🌊 ${waveInfo}<br/>
-              💨 ${(b.wind_quality ?? "").replace(/-/g, " ")}${b.wind_speed_mph ? ` · ${b.wind_speed_mph} mph` : ""}<br/>
-              🌊 ${b.tide_stage} tide${b.water_temp_f ? ` · 🌡️ ${b.water_temp_f}°F` : ""}
-            </div>
-            ${b.briefing ? `<div style="color:#cbd5e1;font-size:11px;margin-top:6px;line-height:1.4">${b.briefing.slice(0, 110)}…</div>` : ""}
-          </div>`;
-
         const marker = L.marker([b.lat, b.lng], { icon })
           .addTo(map)
-          .bindPopup(popup, { maxWidth: 240 })
+          .bindPopup("", { maxWidth: 240 })
           .on("click", () => onSelect(b.break_id));
 
         markersRef.current.push({ id: b.break_id, marker, b });
@@ -128,11 +112,13 @@ export default function BreakMap({ breaks, selected, onSelect }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update marker appearance when selection changes
+  // Update marker icons and popups when breaks data changes (time window switch or selection)
   useEffect(() => {
     const L = leafletRef.current;
     if (!L || !mapInstanceRef.current) return;
-    markersRef.current.forEach(({ id, marker, b }) => {
+    markersRef.current.forEach(({ id, marker }) => {
+      const b = breaks.find((br) => br.break_id === id);
+      if (!b) return;
       const isSelected = id === selected;
       const color = RATING_HEX[b.rating] ?? "#64748b";
       const size = isSelected ? 20 : 14;
@@ -144,9 +130,24 @@ export default function BreakMap({ breaks, selected, onSelect }: Props) {
           iconAnchor: [size / 2, size / 2],
         })
       );
+      const waveInfo = b.wave_height_ft
+        ? `${b.wave_height_ft}ft${b.period_s ? ` @ ${b.period_s}s` : ""}`
+        : "No wave data";
+      const popup = `
+        <div style="font-family:system-ui,sans-serif;min-width:180px;max-width:220px">
+          <div style="font-weight:700;font-size:14px;margin-bottom:3px">${b.break_name}</div>
+          <div style="color:${color};font-weight:600;font-size:13px">${RATING_LABEL[b.rating] ?? b.rating} · ${b.score ?? "??"}⁄10</div>
+          <div style="color:#94a3b8;font-size:12px;margin-top:6px;line-height:1.7">
+            🌊 ${waveInfo}<br/>
+            💨 ${(b.wind_quality ?? "").replace(/-/g, " ")}${b.wind_speed_mph ? ` · ${b.wind_speed_mph} mph` : ""}<br/>
+            🌊 ${b.tide_stage} tide${b.water_temp_f ? ` · 🌡️ ${b.water_temp_f}°F` : ""}
+          </div>
+          ${b.briefing ? `<div style="color:#cbd5e1;font-size:11px;margin-top:6px;line-height:1.4">${b.briefing.slice(0, 110)}…</div>` : ""}
+        </div>`;
+      marker.setPopupContent(popup);
       if (isSelected) marker.openPopup();
     });
-  }, [selected]);
+  }, [breaks, selected]);
 
   // Pan to selected break
   useEffect(() => {
