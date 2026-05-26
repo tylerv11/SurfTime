@@ -1,5 +1,18 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import breaksConfig from "../../../../config/breaks.json";
+
+const breakMetadata = new Map(
+  breaksConfig.breaks.map((break_) => [
+    break_.id,
+    {
+      region: break_.region,
+      break_name: break_.name,
+      lat: break_.lat,
+      lng: break_.lng,
+    },
+  ])
+);
 
 export async function GET() {
   const supabaseUrl =
@@ -23,7 +36,17 @@ export async function GET() {
   }
 
   // Flatten: each row has break_id and data (jsonb)
-  const breaks = data.map((row) => row.data);
+  const breaks = data.map((row) => {
+    const metadata = breakMetadata.get(row.break_id);
+    return {
+      ...metadata,
+      ...row.data,
+      region: row.data.region ?? metadata?.region,
+      break_name: row.data.break_name ?? metadata?.break_name,
+      lat: row.data.lat ?? metadata?.lat,
+      lng: row.data.lng ?? metadata?.lng,
+    };
+  });
 
   // Get latest daily summary
   const { data: summaryData } = await supabase

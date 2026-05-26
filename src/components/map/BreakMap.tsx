@@ -36,13 +36,14 @@ interface Props {
   breaks: BreakCondition[];
   selected: string | null;
   onSelect: (id: string) => void;
+  focusLabel?: string;
 }
 
-export default function BreakMap({ breaks, selected, onSelect }: Props) {
+export default function BreakMap({ breaks, selected, onSelect, focusLabel }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const leafletRef = useRef<any>(null);
-  const markersRef = useRef<{ id: string; marker: any; b: BreakCondition }[]>([]);
+  const markersRef = useRef<Map<string, any>>(new Map());
   const [mapReady, setMapReady] = useState(false);
 
   // Init map once
@@ -53,7 +54,12 @@ export default function BreakMap({ breaks, selected, onSelect }: Props) {
       leafletRef.current = L;
       delete (L.Icon.Default.prototype as any)._getIconUrl;
 
-      const map = L.map(mapRef.current!, {
+      const container = mapRef.current as HTMLDivElement & { _leaflet_id?: number };
+      if (container._leaflet_id) {
+        container._leaflet_id = undefined;
+      }
+
+      const map = L.map(container, {
         center: [36.0, -121.0],
         zoom: 7,
         zoomControl: true,
@@ -67,26 +73,6 @@ export default function BreakMap({ breaks, selected, onSelect }: Props) {
 
       mapInstanceRef.current = map;
       setMapReady(true);
-
-      breaks.forEach((b) => {
-        const color = RATING_HEX[b.rating] ?? "#64748b";
-        const isSelected = b.break_id === selected;
-        const size = isSelected ? 20 : 14;
-
-        const icon = L.divIcon({
-          className: "",
-          html: markerHtml(color, size, isSelected, b.rating),
-          iconSize: [size, size],
-          iconAnchor: [size / 2, size / 2],
-        });
-
-        const marker = L.marker([b.lat, b.lng], { icon })
-          .addTo(map)
-          .bindPopup("", { maxWidth: 240 })
-          .on("click", () => onSelect(b.break_id));
-
-        markersRef.current.push({ id: b.break_id, marker, b });
-      });
 
       // Legend
       const legend = new (L.Control as any)({ position: "bottomleft" });
@@ -108,23 +94,43 @@ export default function BreakMap({ breaks, selected, onSelect }: Props) {
     return () => {
       mapInstanceRef.current?.remove();
       mapInstanceRef.current = null;
-      markersRef.current = [];
+      markersRef.current = new Map();
       leafletRef.current = null;
       setMapReady(false);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Update marker icons and popups when breaks data changes (time window switch or selection)
   useEffect(() => {
     const L = leafletRef.current;
-    if (!L || !mapInstanceRef.current) return;
-    markersRef.current.forEach(({ id, marker }) => {
-      const b = breaks.find((br) => br.break_id === id);
-      if (!b) return;
-      const isSelected = id === selected;
+    const map = mapInstanceRef.current;
+    if (!L || !map) return;
+
+    const visibleIds = new Set(breaks.map((brk) => brk.break_id));
+
+    markersRef.current.forEach((marker, id) => {
+      if (!visibleIds.has(id)) {
+        map.removeLayer(marker);
+        markersRef.current.delete(id);
+      }
+    });
+
+    breaks.forEach((b) => {
+      const isSelected = b.break_id === selected;
       const color = RATING_HEX[b.rating] ?? "#64748b";
       const size = isSelected ? 20 : 14;
+
+      let marker = markersRef.current.get(b.break_id);
+      if (!marker) {
+        marker = L.marker([b.lat, b.lng])
+          .addTo(map)
+          .bindPopup("", { maxWidth: 240, autoPan: false })
+          .on("click", () => onSelect(b.break_id));
+        markersRef.current.set(b.break_id, marker);
+      } else {
+        marker.setLatLng([b.lat, b.lng]);
+      }
+
       marker.setIcon(
         L.divIcon({
           className: "",
@@ -149,6 +155,7 @@ export default function BreakMap({ breaks, selected, onSelect }: Props) {
         </div>`;
       marker.setPopupContent(popup);
       if (isSelected) marker.openPopup();
+      else marker.closePopup();
     });
   }, [breaks, selected]);
 
@@ -158,14 +165,35 @@ export default function BreakMap({ breaks, selected, onSelect }: Props) {
     const brk = breaks.find((b) => b.break_id === selected);
     if (!brk) return;
 
+    mapInstanceRef.current.invalidateSize();
     mapInstanceRef.current.flyTo([brk.lat, brk.lng], 12, {
       animate: true,
       duration: 0.8,
     });
 
-    const selectedMarker = markersRef.current.find((marker) => marker.id === selected);
-    selectedMarker?.marker.openPopup();
+    const selectedMarker = markersRef.current.get(selected);
+    window.setTimeout(() => {
+      selectedMarker?.openPopup();
+    }, 150);
   }, [selected, breaks, mapReady]);
+
+  useEffect(() => {
+    const L = leafletRef.current;
+    const map = mapInstanceRef.current;
+    if (!L || !map || !mapReady || selected || breaks.length === 0) return;
+
+    if (breaks.length === 1) {
+      map.flyTo([breaks[0].lat, breaks[0].lng], 11, { animate: true, duration: 0.8 });
+      return;
+    }
+
+    const bounds = L.latLngBounds(breaks.map((brk) => [brk.lat, brk.lng]));
+    map.fitBounds(bounds, {
+      padding: [36, 36],
+      maxZoom: focusLabel === "All" ? 7 : 10,
+      animate: true,
+    });
+  }, [breaks, focusLabel, mapReady, selected]);
 
   return (
     <>

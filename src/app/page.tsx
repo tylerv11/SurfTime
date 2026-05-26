@@ -64,6 +64,10 @@ const REGION_FILTERS: { id: string; label: string; regions: string[] }[] = [
 
 type SortBy = "score" | "wave_height";
 
+function getRegionLabel(regionFilter: string) {
+  return REGION_FILTERS.find((filter) => filter.id === regionFilter)?.label ?? "All";
+}
+
 function getDefaultWindow(): TimeWindow {
   const h = new Date().getHours();
   if (h < 8) return "early_morning";
@@ -153,8 +157,8 @@ export default function Home() {
     return (b.score ?? 0) - (a.score ?? 0);
   });
 
-  const selectedBreak = windowedBreaks.find((b) => b.break_id === selected);
-  const bestBreaks = windowedBreaks
+  const selectedBreak = sortedBreaks.find((b) => b.break_id === selected) ?? null;
+  const bestBreaks = filteredBreaks
     .filter((b) => b.rating === "epic" || b.rating === "good")
     .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
     .slice(0, 4);
@@ -320,6 +324,48 @@ export default function Home() {
             </div>
           )}
 
+          {view === "map" && (
+            <div className="px-4 py-2.5 border-b border-slate-800 bg-slate-950 flex items-center justify-between gap-3 flex-wrap flex-shrink-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] text-slate-600 uppercase tracking-wide">Region</span>
+                {REGION_FILTERS.map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => {
+                      setRegionFilter(f.id);
+                      setSelected(null);
+                    }}
+                    className={`text-xs px-3 py-1 rounded-sm border font-mono transition-colors ${
+                      regionFilter === f.id
+                        ? "bg-blue-600 border-blue-500 text-white"
+                        : "bg-slate-900 border-slate-700 text-slate-400 hover:text-white hover:border-slate-500"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] text-slate-600 uppercase tracking-wide">Time</span>
+                {TIME_WINDOWS.map((window) => (
+                  <button
+                    key={window.id}
+                    onClick={() => setTimeWindow(window.id)}
+                    className={`text-xs px-3 py-1 rounded-sm border font-mono transition-colors ${
+                      timeWindow === window.id
+                        ? "bg-slate-700 border-slate-600 text-white"
+                        : "bg-slate-900 border-slate-800 text-slate-500 hover:text-white"
+                    }`}
+                  >
+                    {window.label}
+                  </button>
+                ))}
+                <span className="text-[10px] text-slate-600 ml-1">{sortedBreaks.length} spots</span>
+              </div>
+            </div>
+          )}
+
           {/* List view: full grid with filters */}
           {view === "list" ? (
             <div className="flex-1 overflow-y-auto">
@@ -379,11 +425,16 @@ export default function Home() {
           ) : (
             /* Map view */
             <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
-              <div className="flex-1 overflow-hidden">
-                <BreakMap breaks={windowedBreaks} selected={selected} onSelect={setSelected} />
+              <div className="flex-1 lg:basis-1/2 overflow-hidden border-b border-slate-800 lg:border-b-0 lg:border-r">
+                <BreakMap
+                  breaks={sortedBreaks}
+                  selected={selected}
+                  onSelect={setSelected}
+                  focusLabel={getRegionLabel(regionFilter)}
+                />
               </div>
 
-              <div className={`lg:w-88 overflow-y-auto border-l border-slate-800 bg-slate-950 flex-shrink-0
+              <div className={`lg:basis-1/2 overflow-y-auto bg-slate-950 flex-shrink-0
                 ${!selected ? "hidden lg:flex lg:flex-col" : "flex flex-col"}`}>
                 {selected && selectedBreak ? (
                   <div className="p-4 flex flex-col gap-3">
@@ -401,11 +452,9 @@ export default function Home() {
                 ) : (
                   <div className="p-3 space-y-2">
                     <p className="text-[10px] text-slate-600 px-1 py-1 font-mono uppercase tracking-wide">
-                      {windowedBreaks.length} breaks — sorted by score
+                      {sortedBreaks.length} breaks — {getRegionLabel(regionFilter)} — sorted by score
                     </p>
-                    {[...windowedBreaks]
-                      .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-                      .map((b) => (
+                    {sortedBreaks.map((b) => (
                         <BreakCard
                           key={b.break_id}
                           break_={b}
