@@ -7,13 +7,10 @@ interface Props {
 
 export default function DailySummary({ summary }: Props) {
   return (
-    <div className="bg-gradient-to-r from-blue-950/60 to-slate-900/60 border-b border-blue-800/30 px-4 py-2.5 flex-shrink-0">
-      <div className="flex items-start gap-2 max-w-4xl">
-        <span className="text-blue-400 text-sm mt-0.5 flex-shrink-0">🌐</span>
-        <p className="text-sm text-slate-200 leading-relaxed">
-          <span className="font-semibold text-blue-300 mr-1.5">Today:</span>
-          {summary}
-        </p>
+    <div className="border-b border-slate-800 px-4 py-2.5 flex-shrink-0 bg-slate-900/60">
+      <div className="flex items-start gap-3 max-w-4xl">
+        <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest mt-0.5 flex-shrink-0">Brief</span>
+        <p className="text-xs text-slate-300 leading-relaxed">{summary}</p>
       </div>
     </div>
   );

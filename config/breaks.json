@@ -3,6 +3,7 @@
     {
       "id": "malibu",
       "name": "Malibu",
+      "region": "la",
       "lat": 34.0359,
       "lng": -118.6789,
       "noaa_buoy": "46025",
@@ -22,6 +23,7 @@
     {
       "id": "zuma",
       "name": "Zuma Beach",
+      "region": "la",
       "lat": 34.0154,
       "lng": -118.8228,
       "noaa_buoy": "46025",
@@ -41,6 +43,7 @@
     {
       "id": "el-porto",
       "name": "El Porto",
+      "region": "la",
       "lat": 33.9003,
       "lng": -118.4192,
       "noaa_buoy": "46025",
@@ -60,6 +63,7 @@
     {
       "id": "manhattan-pier",
       "name": "Manhattan Beach Pier",
+      "region": "la",
       "lat": 33.8847,
       "lng": -118.4109,
       "noaa_buoy": "46025",
@@ -79,6 +83,7 @@
     {
       "id": "hermosa",
       "name": "Hermosa Beach",
+      "region": "la",
       "lat": 33.8622,
       "lng": -118.4003,
       "noaa_buoy": "46025",
@@ -98,6 +103,7 @@
     {
       "id": "palos-verdes",
       "name": "Palos Verdes",
+      "region": "la",
       "lat": 33.7444,
       "lng": -118.4041,
       "noaa_buoy": "46025",
@@ -117,6 +123,7 @@
     {
       "id": "san-onofre",
       "name": "San Onofre",
+      "region": "oc",
       "lat": 33.3736,
       "lng": -117.5642,
       "noaa_buoy": "46086",
@@ -136,6 +143,7 @@
     {
       "id": "trestles",
       "name": "Trestles",
+      "region": "oc",
       "lat": 33.3856,
       "lng": -117.5881,
       "noaa_buoy": "46086",
@@ -155,6 +163,7 @@
     {
       "id": "huntington-pier",
       "name": "Huntington Beach Pier",
+      "region": "oc",
       "lat": 33.6541,
       "lng": -118.0059,
       "noaa_buoy": "46086",
@@ -174,6 +183,7 @@
     {
       "id": "newport",
       "name": "Newport Beach",
+      "region": "oc",
       "lat": 33.5931,
       "lng": -117.8814,
       "noaa_buoy": "46086",
@@ -193,6 +203,7 @@
     {
       "id": "rincon",
       "name": "Rincon",
+      "region": "la",
       "lat": 34.3723,
       "lng": -119.4757,
       "noaa_buoy": "46054",
@@ -212,6 +223,7 @@
     {
       "id": "ventura-point",
       "name": "Ventura Point",
+      "region": "la",
       "lat": 34.2741,
       "lng": -119.3097,
       "noaa_buoy": "46054",
@@ -231,6 +243,7 @@
     {
       "id": "county-line",
       "name": "County Line",
+      "region": "la",
       "lat": 34.0522,
       "lng": -118.9627,
       "noaa_buoy": "46025",
@@ -250,6 +263,7 @@
     {
       "id": "leo-carrillo",
       "name": "Leo Carrillo",
+      "region": "la",
       "lat": 34.0457,
       "lng": -118.9348,
       "noaa_buoy": "46025",
@@ -269,6 +283,7 @@
     {
       "id": "pismo",
       "name": "Pismo Beach",
+      "region": "central",
       "lat": 35.1427,
       "lng": -120.6413,
       "noaa_buoy": "46011",
@@ -288,6 +303,7 @@
     {
       "id": "morro-bay",
       "name": "Morro Bay",
+      "region": "central",
       "lat": 35.3669,
       "lng": -120.8497,
       "noaa_buoy": "46011",
@@ -307,6 +323,7 @@
     {
       "id": "steamer-lane",
       "name": "Steamer Lane",
+      "region": "sf",
       "lat": 36.9513,
       "lng": -122.0267,
       "noaa_buoy": "46042",
@@ -326,6 +343,7 @@
     {
       "id": "mavericks",
       "name": "Mavericks",
+      "region": "sf",
       "lat": 37.4956,
       "lng": -122.5032,
       "noaa_buoy": "46042",
@@ -345,6 +363,7 @@
     {
       "id": "linda-mar",
       "name": "Linda Mar (Pacifica)",
+      "region": "sf",
       "lat": 37.6155,
       "lng": -122.4872,
       "noaa_buoy": "46042",
@@ -364,6 +383,7 @@
     {
       "id": "ocean-beach-sf",
       "name": "Ocean Beach (SF)",
+      "region": "sf",
       "lat": 37.7697,
       "lng": -122.5103,
       "noaa_buoy": "46026",
@@ -379,6 +399,106 @@
         "wind_max_mph": 10
       },
       "notes": "San Francisco's main beach break. Powerful and unpredictable. Strong rips, cold water, frequent fog. For experienced surfers only. Iconic backdrop of the city."
+    },
+    {
+      "id": "swamis",
+      "name": "Swami's",
+      "region": "sd",
+      "lat": 33.0361,
+      "lng": -117.2920,
+      "noaa_buoy": "46086",
+      "nws_grid": { "office": "SGX", "x": 54, "y": 29 },
+      "tide_station": "9410170",
+      "ideal": {
+        "swell_direction": ["NW", "WNW", "W"],
+        "min_height_ft": 3,
+        "max_height_ft": 10,
+        "period_min_s": 12,
+        "tide": "mid-low",
+        "wind": "NE",
+        "wind_max_mph": 10
+      },
+      "notes": "Encinitas reef point with a classic right-hander. One of the best waves in San Diego County. Less crowded than La Jolla spots."
+    },
+    {
+      "id": "cardiff",
+      "name": "Cardiff Reef",
+      "region": "sd",
+      "lat": 33.0121,
+      "lng": -117.2854,
+      "noaa_buoy": "46086",
+      "nws_grid": { "office": "SGX", "x": 54, "y": 28 },
+      "tide_station": "9410170",
+      "ideal": {
+        "swell_direction": ["NW", "W", "WNW"],
+        "min_height_ft": 3,
+        "max_height_ft": 10,
+        "period_min_s": 12,
+        "tide": "low-mid",
+        "wind": "NE",
+        "wind_max_mph": 12
+      },
+      "notes": "Reef break just south of Swami's. Can be hollow and fast at low tide. Popular with locals."
+    },
+    {
+      "id": "windansea",
+      "name": "Windansea",
+      "region": "sd",
+      "lat": 32.8376,
+      "lng": -117.2774,
+      "noaa_buoy": "46086",
+      "nws_grid": { "office": "SGX", "x": 53, "y": 20 },
+      "tide_station": "9410170",
+      "ideal": {
+        "swell_direction": ["NW", "WNW", "W"],
+        "min_height_ft": 3,
+        "max_height_ft": 10,
+        "period_min_s": 12,
+        "tide": "mid",
+        "wind": "NE",
+        "wind_max_mph": 10
+      },
+      "notes": "La Jolla reef legend. Shallow, powerful, and territorial. Works best on solid NW groundswell. One of San Diego's most iconic breaks."
+    },
+    {
+      "id": "pacific-beach",
+      "name": "Pacific Beach",
+      "region": "sd",
+      "lat": 32.7975,
+      "lng": -117.2543,
+      "noaa_buoy": "46086",
+      "nws_grid": { "office": "SGX", "x": 54, "y": 18 },
+      "tide_station": "9410170",
+      "ideal": {
+        "swell_direction": ["SW", "W", "NW"],
+        "min_height_ft": 2,
+        "max_height_ft": 8,
+        "period_min_s": 9,
+        "tide": "any",
+        "wind": "NE",
+        "wind_max_mph": 12
+      },
+      "notes": "San Diego's most popular beach break. Fun and beginner-friendly. Consistent surf, lots of energy."
+    },
+    {
+      "id": "ocean-beach-sd",
+      "name": "Ocean Beach (SD)",
+      "region": "sd",
+      "lat": 32.7484,
+      "lng": -117.2540,
+      "noaa_buoy": "46086",
+      "nws_grid": { "office": "SGX", "x": 53, "y": 16 },
+      "tide_station": "9410170",
+      "ideal": {
+        "swell_direction": ["SW", "W", "NW"],
+        "min_height_ft": 2,
+        "max_height_ft": 8,
+        "period_min_s": 10,
+        "tide": "low-mid",
+        "wind": "NE",
+        "wind_max_mph": 12
+      },
+      "notes": "Chill, eclectic vibe. Beach and pier break. Works on W and SW swell. OB pier creates fun sandbars."
     }
   ],
   "buoys": {

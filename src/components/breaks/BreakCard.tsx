@@ -2,37 +2,36 @@
 
 import { BreakCondition, TimeWindow } from "@/app/page";
 
-const RATING_COLORS: Record<string, string> = {
-  epic: "bg-purple-500",
-  good: "bg-green-500",
-  fair: "bg-yellow-500",
-  poor: "bg-orange-500",
+const RATING_COLOR: Record<string, string> = {
+  epic:              "text-purple-400 bg-purple-500/10 border-purple-500/30",
+  good:              "text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
+  fair:              "text-yellow-400 bg-yellow-500/10 border-yellow-500/30",
+  poor:              "text-orange-400 bg-orange-500/10 border-orange-500/30",
+  "flat-or-blown":   "text-red-400 bg-red-500/10 border-red-500/30",
+  error:             "text-slate-400 bg-slate-500/10 border-slate-500/30",
+};
+
+const RATING_DOT: Record<string, string> = {
+  epic:            "bg-purple-500",
+  good:            "bg-emerald-500",
+  fair:            "bg-yellow-500",
+  poor:            "bg-orange-500",
   "flat-or-blown": "bg-red-500",
-  error: "bg-slate-500",
+  error:           "bg-slate-500",
 };
 
-const WIND_ICONS: Record<string, string> = {
-  glassy: "🪟",
-  "offshore-good": "💨",
-  "offshore-strong": "🌬️",
-  "onshore-poor": "😬",
-  "onshore-blown-out": "❌",
-  "cross-variable": "↕️",
-};
-
-const TIDE_ICONS: Record<string, string> = {
-  low: "⬇️",
-  "low-mid": "↙️",
-  mid: "➡️",
-  "mid-high": "↗️",
-  high: "⬆️",
-  unknown: "❓",
+const REGION_LABEL: Record<string, string> = {
+  sd:      "San Diego",
+  oc:      "Orange Co.",
+  la:      "Los Angeles",
+  sf:      "NorCal / SF",
+  central: "Central Coast",
 };
 
 const WINDOW_LABELS: Record<TimeWindow, string> = {
   early_morning: "5–8am",
-  morning: "8–12pm",
-  afternoon: "12–3pm",
+  morning:       "8–12pm",
+  afternoon:     "12–3pm",
 };
 
 interface Props {
@@ -43,56 +42,79 @@ interface Props {
 }
 
 export default function BreakCard({ break_: b, expanded, onSelect, timeWindow }: Props) {
-  const ratingColor = RATING_COLORS[b.rating] ?? "bg-slate-500";
-
+  const dot = RATING_DOT[b.rating] ?? "bg-slate-500";
+  const badge = RATING_COLOR[b.rating] ?? RATING_COLOR.error;
   const windows = b.time_windows;
   const hasWindows = !!(windows && (windows.early_morning || windows.morning || windows.afternoon));
 
   return (
     <div
-      className={`rounded-xl bg-slate-800 border border-slate-700 p-3 ${onSelect ? "cursor-pointer hover:border-blue-500 transition-colors" : ""}`}
+      className={`rounded-lg bg-slate-900 border border-slate-800 p-3 transition-colors ${
+        onSelect ? "cursor-pointer hover:border-slate-600" : ""
+      }`}
       onClick={onSelect}
     >
-      {/* Header row */}
-      <div className="flex items-center justify-between mb-1">
-        <h2 className="font-semibold text-sm">{b.break_name}</h2>
-        <div className="flex items-center gap-2">
-          {b.score !== null && (
-            <span className="text-xs font-bold text-white opacity-80">{b.score}/10</span>
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${dot}`} />
+            <h2 className="font-semibold text-sm leading-tight truncate">{b.break_name}</h2>
+          </div>
+          {b.region && (
+            <p className="text-[10px] text-slate-600 font-mono ml-3.5 mt-0.5 uppercase tracking-wide">
+              {REGION_LABEL[b.region] ?? b.region}
+            </p>
           )}
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium text-white ${ratingColor}`}>
-            {b.rating}
+        </div>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {b.score !== null && (
+            <span className="text-xs font-mono font-bold text-slate-300">{b.score}/10</span>
+          )}
+          <span className={`text-[10px] px-2 py-0.5 rounded-sm border font-mono font-medium capitalize ${badge}`}>
+            {b.rating === "flat-or-blown" ? "blown" : b.rating}
           </span>
         </div>
       </div>
 
-      {/* Conditions row */}
-      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400">
-        {b.wave_height_ft !== null && (
-          <span>🌊 {b.wave_height_ft}ft {b.period_s ? `@ ${b.period_s}s` : ""} {b.wave_direction ?? ""}</span>
-        )}
-        <span>{WIND_ICONS[b.wind_quality] ?? "💨"} {b.wind_quality?.replace(/-/g, " ")} {b.wind_speed_mph ? `${b.wind_speed_mph}mph` : ""}</span>
-        <span>{TIDE_ICONS[b.tide_stage] ?? "🌊"} {b.tide_stage} tide</span>
-        {b.water_temp_f && <span>🌡️ {b.water_temp_f}°F</span>}
+      {/* Conditions */}
+      <div className="grid grid-cols-3 gap-x-2 gap-y-1 text-[11px] text-slate-400 font-mono">
+        <div>
+          <div className="text-[9px] text-slate-600 uppercase tracking-wide mb-0.5">Wave</div>
+          <div>{b.wave_height_ft !== null ? `${b.wave_height_ft}ft` : "—"}{b.period_s ? ` ${b.period_s}s` : ""}</div>
+        </div>
+        <div>
+          <div className="text-[9px] text-slate-600 uppercase tracking-wide mb-0.5">Wind</div>
+          <div className="truncate">{b.wind_speed_mph ? `${b.wind_speed_mph}mph ${b.wind_direction}` : "—"}</div>
+        </div>
+        <div>
+          <div className="text-[9px] text-slate-600 uppercase tracking-wide mb-0.5">Tide</div>
+          <div className="capitalize">{b.tide_stage ?? "—"}</div>
+        </div>
       </div>
 
-      {/* Time window mini-scores (list card, not expanded) */}
+      {/* Time window pills (list card) */}
       {!expanded && hasWindows && windows && (
-        <div className="flex gap-1.5 mt-2">
+        <div className="flex gap-1 mt-2.5 border-t border-slate-800 pt-2">
           {(["early_morning", "morning", "afternoon"] as TimeWindow[]).map((wid) => {
             const win = windows[wid];
             if (!win) return null;
             const active = timeWindow === wid;
-            const color = RATING_COLORS[win.rating] ?? "bg-slate-600";
+            const activeDot = RATING_DOT[win.rating] ?? "bg-slate-600";
             return (
               <div
                 key={wid}
-                className={`flex-1 text-center rounded-md py-1 px-0.5 text-[10px] transition-all ${
-                  active ? `${color} text-white font-semibold` : "bg-slate-700/60 text-slate-400"
+                className={`flex-1 text-center py-1 px-0.5 rounded-sm text-[10px] font-mono transition-all ${
+                  active ? "bg-slate-800 border border-slate-600 text-white" : "text-slate-600"
                 }`}
               >
-                <div>{WINDOW_LABELS[wid]}</div>
-                <div className={active ? "text-white/90 font-bold" : "text-slate-300"}>{win.score}/10</div>
+                <div className="flex items-center justify-center gap-1">
+                  {active && <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${activeDot}`} />}
+                  <span>{WINDOW_LABELS[wid]}</span>
+                </div>
+                <div className={`font-bold mt-0.5 ${active ? "text-slate-200" : "text-slate-600"}`}>
+                  {win.score}/10
+                </div>
               </div>
             );
           })}
@@ -101,47 +123,47 @@ export default function BreakCard({ break_: b, expanded, onSelect, timeWindow }:
 
       {/* Briefing */}
       {(expanded || b.briefing) && (
-        <p className={`mt-2 text-xs leading-relaxed ${expanded ? "text-slate-200" : "text-slate-400 line-clamp-2"}`}>
+        <p className={`mt-2.5 text-xs leading-relaxed ${expanded ? "text-slate-300" : "text-slate-500 line-clamp-2"}`}>
           {b.briefing}
         </p>
       )}
 
-      {/* Expanded: time window breakdown */}
+      {/* Expanded time window breakdown */}
       {expanded && hasWindows && windows && (
-        <div className="mt-3 pt-3 border-t border-slate-700">
-          <p className="text-xs text-slate-500 mb-2">Forecast by time of day</p>
+        <div className="mt-3 pt-3 border-t border-slate-800">
+          <p className="text-[10px] text-slate-600 font-mono uppercase tracking-wide mb-2">Forecast by time</p>
           <div className="grid grid-cols-3 gap-2">
             {(["early_morning", "morning", "afternoon"] as TimeWindow[]).map((wid) => {
               const win = windows[wid];
               if (!win) return null;
               const active = timeWindow === wid;
-              const colorClass = RATING_COLORS[win.rating] ?? "bg-slate-600";
+              const activeDot = RATING_DOT[win.rating] ?? "bg-slate-600";
               return (
                 <div
                   key={wid}
-                  className={`rounded-lg p-2 text-center text-xs border ${
-                    active
-                      ? `bg-slate-700 border-blue-500/60`
-                      : "bg-slate-700/40 border-slate-600/30"
+                  className={`rounded-sm p-2 text-center border font-mono ${
+                    active ? "bg-slate-800 border-slate-600" : "bg-slate-900/50 border-slate-800"
                   }`}
                 >
-                  <div className="text-slate-400 text-[10px] mb-0.5">{WINDOW_LABELS[wid]}</div>
-                  <div className={`font-bold text-sm ${active ? "text-white" : "text-slate-200"}`}>
-                    {win.score}/10
+                  <div className="text-[9px] text-slate-500 uppercase tracking-wide mb-1">{WINDOW_LABELS[wid]}</div>
+                  <div className="flex items-center justify-center gap-1 mb-0.5">
+                    <div className={`w-1.5 h-1.5 rounded-full ${activeDot}`} />
+                    <span className={`font-bold text-sm ${active ? "text-white" : "text-slate-300"}`}>{win.score}/10</span>
                   </div>
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full text-white ${colorClass}`}>
-                    {win.rating}
-                  </span>
-                  <div className="text-[10px] text-slate-500 mt-1">
-                    {WIND_ICONS[win.wind_quality] ?? "💨"} {win.wind_speed_mph}mph {win.wind_direction}
-                  </div>
-                  <div className="text-[10px] text-slate-500">
-                    {TIDE_ICONS[win.tide_stage] ?? ""} {win.tide_stage} tide
-                  </div>
+                  <div className="text-[10px] text-slate-500 capitalize">{win.rating === "flat-or-blown" ? "blown" : win.rating}</div>
+                  <div className="text-[9px] text-slate-600 mt-1">{win.wind_speed_mph}mph {win.wind_direction}</div>
+                  <div className="text-[9px] text-slate-600 capitalize">{win.tide_stage} tide</div>
                 </div>
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Water temp (expanded) */}
+      {expanded && b.water_temp_f && (
+        <div className="mt-2 text-xs font-mono text-slate-500">
+          Water temp: <span className="text-slate-300">{b.water_temp_f}°F</span>
         </div>
       )}
     </div>
