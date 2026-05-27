@@ -69,6 +69,11 @@ const REGION_FILTERS: { id: string; label: string; regions: string[] }[] = [
 ];
 
 type SortBy = "score" | "wave_height";
+const LOCATION_CACHE_KEY = "surftime_viewer_location_v1";
+const LOCATION_DISMISS_KEY = "surftime_location_prompt_dismissed_until_v1";
+const VISITOR_KEY = "surftime_visitor_key_v1";
+const VISITOR_TEMP_LIST_KEY = "surftime_visitor_temp_list_v1";
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 function getRegionLabel(regionFilter: string) {
   return REGION_FILTERS.find((filter) => filter.id === regionFilter)?.label ?? "All";
@@ -171,10 +176,17 @@ export default function Home() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const saved = window.localStorage.getItem("surftime_viewer_location");
+    const dismissUntil = Number(window.localStorage.getItem(LOCATION_DISMISS_KEY) ?? "0");
+    if (dismissUntil > Date.now()) setLocationPromptDismissed(true);
+
+    const saved = window.localStorage.getItem(LOCATION_CACHE_KEY);
     if (!saved) return;
     try {
-      const parsed = JSON.parse(saved) as { lat: number; lng: number };
+      const parsed = JSON.parse(saved) as { lat: number; lng: number; ts: number };
+      if (Date.now() - parsed.ts > SEVEN_DAYS_MS) {
+        window.localStorage.removeItem(LOCATION_CACHE_KEY);
+        return;
+      }
       if (typeof parsed.lat === "number" && typeof parsed.lng === "number") {
         setViewerLocation(parsed);
       }
@@ -185,8 +197,33 @@ export default function Home() {
 
   useEffect(() => {
     if (typeof window === "undefined" || !viewerLocation) return;
-    window.localStorage.setItem("surftime_viewer_location", JSON.stringify(viewerLocation));
+    window.localStorage.setItem(
+      LOCATION_CACHE_KEY,
+      JSON.stringify({ ...viewerLocation, ts: Date.now() })
+    );
   }, [viewerLocation]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    async function ensureVisitorKey() {
+      let key = window.localStorage.getItem(VISITOR_KEY);
+      if (!key) {
+        const raw = `${crypto.randomUUID()}|${navigator.userAgent}|${Date.now()}`;
+        const bytes = new TextEncoder().encode(raw);
+        const digest = await window.crypto.subtle.digest("SHA-256", bytes);
+        key = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 24);
+        window.localStorage.setItem(VISITOR_KEY, key);
+      }
+      const existing = JSON.parse(window.localStorage.getItem(VISITOR_TEMP_LIST_KEY) ?? "[]") as Array<{ key: string; seenAt: number }>;
+      const now = Date.now();
+      const next = [
+        ...existing.filter((entry) => now - entry.seenAt <= SEVEN_DAYS_MS && entry.key !== key),
+        { key, seenAt: now },
+      ].slice(-200);
+      window.localStorage.setItem(VISITOR_TEMP_LIST_KEY, JSON.stringify(next));
+    }
+    ensureVisitorKey().catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -204,6 +241,9 @@ export default function Home() {
         };
         setViewerLocation(nextLocation);
         setLocationPromptDismissed(true);
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(LOCATION_DISMISS_KEY, String(Date.now() + SEVEN_DAYS_MS));
+        }
         const currentBreaks = (data?.breaks ?? []).map((b) => getBreakForWindow(b, timeWindow));
         const nearest = getNearestBreak(currentBreaks, nextLocation);
         if (nearest?.region) setRegionFilter(nearest.region);
@@ -347,7 +387,12 @@ export default function Home() {
                   Find Beaches near me (use my location)
                 </button>
                 <button
-                  onClick={() => setLocationPromptDismissed(true)}
+                  onClick={() => {
+                    setLocationPromptDismissed(true);
+                    if (typeof window !== "undefined") {
+                      window.localStorage.setItem(LOCATION_DISMISS_KEY, String(Date.now() + SEVEN_DAYS_MS));
+                    }
+                  }}
                   className="text-[11px] px-2 py-1 rounded-sm border border-slate-800 bg-slate-950 text-slate-500 hover:text-slate-300"
                 >
                   Dismiss
@@ -500,8 +545,8 @@ export default function Home() {
             </div>
           ) : (
             /* Map view */
-            <div className="flex flex-col lg:flex-row flex-1 overflow-hidden">
-              <div className="flex-1 lg:basis-1/2 overflow-hidden border-b border-slate-800 lg:border-b-0 lg:border-r">
+            <div className="flex flex-col lg:flex-row flex-1 min-h-0 overflow-hidden">
+              <div className="flex-1 min-h-0 lg:basis-1/2 overflow-hidden border-b border-slate-800 lg:border-b-0 lg:border-r">
                 <BreakMap
                   breaks={sortedBreaks}
                   selected={selected}
@@ -513,7 +558,7 @@ export default function Home() {
                 />
               </div>
 
-              <div className={`lg:basis-1/2 overflow-y-auto bg-slate-950 flex-shrink-0
+              <div className={`lg:basis-1/2 min-h-0 overflow-y-auto bg-slate-950 flex-shrink-0
                 ${!selected ? "hidden lg:flex lg:flex-col" : "flex flex-col"}`}>
                 {selected && selectedBreak ? (
                   <div ref={mobileDetailRef} className="p-4 flex flex-col gap-3">
