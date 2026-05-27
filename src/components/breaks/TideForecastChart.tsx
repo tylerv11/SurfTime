@@ -48,6 +48,12 @@ export default function TideForecastChart({ station }: { station?: string }) {
     .join(" ");
 
   const pointIndexByTime = new Map(points.map((p, i) => [p.t, i]));
+  const axisTicks = points
+    .map((p, i) => ({ p, i }))
+    .filter(({ p }) => {
+      const hour = Number.parseInt(p.t.slice(11, 13), 10);
+      return hour === 6 || hour === 12 || hour === 18;
+    });
 
   function formatClock(ts: string) {
     const date = new Date(ts.replace(" ", "T"));
@@ -58,6 +64,25 @@ export default function TideForecastChart({ station }: { station?: string }) {
     <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-2">
       <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-mono mb-1">Tide Forecast (next 3 days)</div>
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-32">
+        {axisTicks.map(({ p, i }) => {
+          const x = toX(i);
+          const hour = Number.parseInt(p.t.slice(11, 13), 10);
+          const label = hour === 6 ? "6am" : hour === 12 ? "12pm" : "6pm";
+          const day = new Date(p.t.replace(" ", "T")).toLocaleDateString("en-US", { weekday: "short" });
+          return (
+            <g key={`tick-${p.t}`}>
+              <line x1={x} x2={x} y1={height - 18} y2={height - 10} stroke="rgba(148,163,184,0.35)" strokeWidth="1" />
+              <text x={x} y={height - 1} fill="#64748b" fontSize="8.5" fontFamily="monospace" textAnchor="middle">
+                {label}
+              </text>
+              {hour === 6 && (
+                <text x={x} y={10} fill="#64748b" fontSize="8.5" fontFamily="monospace" textAnchor="middle">
+                  {day}
+                </text>
+              )}
+            </g>
+          );
+        })}
         <path d={path} stroke="#94a3b8" strokeWidth="2" fill="none" />
         {highsLows.slice(0, 8).map((p) => {
           const idx = pointIndexByTime.get(p.t);
