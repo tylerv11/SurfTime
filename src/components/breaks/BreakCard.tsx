@@ -95,6 +95,22 @@ export default function BreakCard({ break_: b, expanded, onSelect, timeWindow }:
         </p>
       )}
 
+      {expanded && (
+        <div className="mt-2 rounded-md border border-slate-800 bg-slate-950/60 p-2">
+          <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 font-mono">
+            Methodology · {b.scoring_model ?? "weighted-rules-v1"}
+          </div>
+          <div className="mt-1 text-[10px] text-slate-400">
+            {b.scoring_method ?? "Deterministic weighted compatibility score (not regression / not R²)."}
+          </div>
+          {!!b.reasons?.length && (
+            <div className="mt-1 text-[10px] text-slate-500 font-mono truncate">
+              Why this score: {b.reasons.slice(0, 2).join(" · ")}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Forecast chart (expanded) */}
       {expanded && (
         <div className="mt-3 pt-3 border-t border-slate-800">

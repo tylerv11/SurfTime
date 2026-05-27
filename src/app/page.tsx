@@ -31,6 +31,10 @@ export interface BreakCondition {
   wind_direction: string;
   tide_stage: string;
   water_temp_f: number | null;
+  reasons?: string[];
+  scoring_model?: string;
+  scoring_method?: string;
+  scoring_weights?: Record<string, number>;
   tide_station?: string;
   briefing: string;
   updated_at: string;
@@ -287,7 +291,7 @@ export default function Home() {
                   onClick={requestLocation}
                   className="text-[11px] px-2 py-1 rounded-sm border border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-500"
                 >
-                  Use location
+                  Find Beaches near me (use my location)
                 </button>
                 <button
                   onClick={() => setLocationPromptDismissed(true)}
