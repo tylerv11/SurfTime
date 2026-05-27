@@ -202,9 +202,9 @@ export default function BreakMap({ breaks, selected, onSelect, focusLabel }: Pro
       return;
     }
 
-    const anchor = offsetWestByYards(brk.lat, brk.lng, 800);
+    const anchor = offsetWestByYards(brk.lat, brk.lng, 1200);
     const html = `
-      <div style="display:flex;align-items:center;gap:6px;padding:4px 7px;border-radius:8px;background:rgba(15,23,42,0.88);border:1px solid rgba(148,163,184,0.35);color:#cbd5e1;font:11px/1.2 monospace;white-space:nowrap;">
+      <div style="display:flex;align-items:center;gap:6px;padding:4px 7px;border-radius:8px;background:rgba(15,23,42,0.88);border:1px solid rgba(148,163,184,0.35);color:#cbd5e1;font:11px/1.2 monospace;white-space:nowrap;pointer-events:none;">
         <span style="display:inline-block;transform:rotate(${swellDeg}deg);transform-origin:50% 50%;font-size:14px;">↑</span>
         <span>Swell direction</span>
       </div>
@@ -217,7 +217,7 @@ export default function BreakMap({ breaks, selected, onSelect, focusLabel }: Pro
           className: "",
           html,
           iconSize: [148, 24],
-          iconAnchor: [0, 12],
+          iconAnchor: [148, 12],
         }),
       }).addTo(map);
     } else {
@@ -227,7 +227,7 @@ export default function BreakMap({ breaks, selected, onSelect, focusLabel }: Pro
           className: "",
           html,
           iconSize: [148, 24],
-          iconAnchor: [0, 12],
+          iconAnchor: [148, 12],
         })
       );
     }
