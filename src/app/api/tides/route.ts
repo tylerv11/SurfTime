@@ -11,11 +11,12 @@ export async function GET(req: NextRequest) {
   if (!station) return NextResponse.json({ error: "Missing station" }, { status: 400 });
 
   const now = new Date();
-  const end = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const begin = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+  const end = new Date(begin.getTime() + 4 * 24 * 60 * 60 * 1000);
   const baseParams = {
     product: "predictions",
     application: "surftime",
-    begin_date: ymd(now),
+    begin_date: ymd(begin),
     end_date: ymd(end),
     datum: "MLLW",
     station,

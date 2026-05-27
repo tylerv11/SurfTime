@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     latitude: lat,
     longitude: lng,
     hourly: "wave_height",
-    forecast_days: "3",
+    forecast_days: "4",
     timezone: "auto",
   });
 

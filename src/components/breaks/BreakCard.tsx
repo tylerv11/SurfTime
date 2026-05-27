@@ -95,31 +95,40 @@ export default function BreakCard({ break_: b, expanded, onSelect, timeWindow }:
         </p>
       )}
 
-      {expanded && (
-        <div className="mt-2 rounded-md border border-slate-800 bg-slate-950/60 p-2">
-          <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 font-mono">
-            Methodology · {b.scoring_model ?? "weighted-rules-v1"}
-          </div>
-          <div className="mt-1 text-[10px] text-slate-400">
-            {b.scoring_method ?? "Deterministic weighted compatibility score (not regression / not R²)."}
-          </div>
-          {!!b.reasons?.length && (
-            <div className="mt-1 text-[10px] text-slate-500 font-mono truncate">
-              Why this score: {b.reasons.slice(0, 2).join(" · ")}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Forecast chart (expanded) */}
       {expanded && (
         <div className="mt-3 pt-3 border-t border-slate-800">
+          <div className="mb-2 text-[10px] text-slate-500 font-mono">
+            Chosen model for this beach: {b.scoring_model ?? "weighted-rules-v1"}
+          </div>
           <BreakForecastChart break_={b} selectedWindow={timeWindow} />
           <div className="mt-3">
-            <WaveForecastChart lat={b.lat} lng={b.lng} />
+            <WaveForecastChart lat={b.lat} lng={b.lng} modelName={b.scoring_model} />
           </div>
           <div className="mt-3">
-            <TideForecastChart station={b.tide_station} />
+            <TideForecastChart station={b.tide_station} modelName={b.scoring_model} />
+          </div>
+          <div className="mt-3 rounded-md border border-slate-800 bg-slate-950/60 p-2">
+            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 font-mono">
+              Methodology · {b.scoring_model ?? "weighted-rules-v1"}
+            </div>
+            <div className="mt-1 text-[10px] text-slate-400">
+              {b.scoring_method ?? "Deterministic weighted compatibility score (not regression / not R²)."}
+            </div>
+            <div className="mt-1 text-[10px] text-slate-500 font-mono">
+              Selection criteria: swell height, swell direction match, period quality, wind quality/direction, and tide suitability.
+            </div>
+            {b.scoring_weights && (
+              <div className="mt-1 text-[10px] text-slate-500 font-mono">
+                Weights: H {Math.round((b.scoring_weights.swell_height ?? 0) * 100)}% · Dir {Math.round((b.scoring_weights.swell_direction ?? 0) * 100)}% ·
+                Per {Math.round((b.scoring_weights.period ?? 0) * 100)}% · Wind {Math.round((b.scoring_weights.wind ?? 0) * 100)}% · Tide {Math.round((b.scoring_weights.tide ?? 0) * 100)}%
+              </div>
+            )}
+            {!!b.reasons?.length && (
+              <div className="mt-1 text-[10px] text-slate-500 font-mono truncate">
+                Why this score: {b.reasons.slice(0, 2).join(" · ")}
+              </div>
+            )}
           </div>
         </div>
       )}

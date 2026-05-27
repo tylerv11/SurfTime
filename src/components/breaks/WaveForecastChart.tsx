@@ -7,23 +7,23 @@ interface Point {
   v: number;
 }
 
-export default function WaveForecastChart({ lat, lng }: { lat: number; lng: number }) {
+export default function WaveForecastChart({ lat, lng, modelName }: { lat: number; lng: number; modelName?: string }) {
   const [points, setPoints] = useState<Point[]>([]);
 
   useEffect(() => {
     fetch(`/api/waves?lat=${lat}&lng=${lng}`)
       .then((r) => r.json())
-      .then((d) => setPoints((d.points ?? []).slice(0, 72)))
+      .then((d) => setPoints((d.points ?? []).slice(0, 96)))
       .catch(() => setPoints([]));
   }, [lat, lng]);
 
-  if (!points.length) return <div className="text-[11px] text-slate-500 font-mono">Loading 3-day wave forecast…</div>;
+  if (!points.length) return <div className="text-[11px] text-slate-500 font-mono">Loading 4-day wave forecast…</div>;
 
   const values = points.map((p) => p.v).filter((v) => Number.isFinite(v));
   const min = Math.min(...values);
   const max = Math.max(...values);
   const span = Math.max(max - min, 0.1);
-  const width = 780;
+  const width = 1040;
   const height = 140;
   const leftPad = 30;
   const rightPad = 10;
@@ -54,15 +54,19 @@ export default function WaveForecastChart({ lat, lng }: { lat: number; lng: numb
 
   return (
     <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-2">
-      <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-mono mb-1">Wave Height Forecast (next 3 days)</div>
-      <div className="text-[10px] text-slate-600 font-mono mb-1">Projection from marine forecast model inputs.</div>
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-28">
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-mono">Wave Height Forecast (next 4 days)</div>
+        <div className="text-[11px] text-slate-500 font-mono">Model: {modelName ?? "weighted-rules-v1"}</div>
+      </div>
+      <div className="text-[11px] text-slate-500 font-mono mb-1">Projection from marine forecast model inputs.</div>
+      <div className="overflow-x-auto">
+      <svg viewBox={`0 0 ${width} ${height}`} className="min-w-[980px] w-full h-32">
         {yTicks.map((tick) => {
           const y = toY(tick);
           return (
             <g key={`y-${tick}`}>
               <line x1={leftPad} x2={width - rightPad} y1={y} y2={y} stroke="rgba(148,163,184,0.14)" strokeWidth="1" />
-              <text x={2} y={y + 3} fill="#64748b" fontSize="8.5" fontFamily="monospace">
+              <text x={2} y={y + 4} fill="#64748b" fontSize="10" fontFamily="monospace">
                 {tick.toFixed(1)}ft
               </text>
             </g>
@@ -76,11 +80,11 @@ export default function WaveForecastChart({ lat, lng }: { lat: number; lng: numb
           return (
             <g key={`tick-${p.t}`}>
               <line x1={x} x2={x} y1={height - 18} y2={height - 10} stroke="rgba(148,163,184,0.35)" strokeWidth="1" />
-              <text x={x} y={height - 1} fill="#64748b" fontSize="8.5" fontFamily="monospace" textAnchor="middle">
+              <text x={x} y={height - 1} fill="#64748b" fontSize="10" fontFamily="monospace" textAnchor="middle">
                 {label}
               </text>
               {hour === 6 && (
-                <text x={x} y={10} fill="#64748b" fontSize="8.5" fontFamily="monospace" textAnchor="middle">
+                <text x={x} y={10} fill="#64748b" fontSize="10" fontFamily="monospace" textAnchor="middle">
                   {day}
                 </text>
               )}
@@ -89,19 +93,20 @@ export default function WaveForecastChart({ lat, lng }: { lat: number; lng: numb
         })}
         <path d={path} stroke="#38bdf8" strokeWidth="2" fill="none" />
         {valueLabels.map(({ p, i }) => (
-          <text key={`val-${p.t}`} x={toX(i)} y={toY(p.v) - 6} fill="#94a3b8" fontSize="8" fontFamily="monospace" textAnchor="middle">
+          <text key={`val-${p.t}`} x={toX(i)} y={toY(p.v) - 6} fill="#94a3b8" fontSize="10" fontFamily="monospace" textAnchor="middle">
             {p.v.toFixed(1)}ft
           </text>
         ))}
         <circle cx={toX(peakIdx)} cy={toY(peak.v)} r="3" fill="#22c55e" />
-        <text x={toX(peakIdx) + 4} y={toY(peak.v) - 6} fill="#cbd5e1" fontSize="9" fontFamily="monospace">
+        <text x={toX(peakIdx) + 4} y={toY(peak.v) - 6} fill="#cbd5e1" fontSize="10.5" fontFamily="monospace">
           ▲ Peak {peak.v.toFixed(1)}ft {fmt(peak.t)}
         </text>
         <circle cx={toX(troughIdx)} cy={toY(trough.v)} r="3" fill="#f59e0b" />
-        <text x={toX(troughIdx) + 4} y={toY(trough.v) + 14} fill="#cbd5e1" fontSize="9" fontFamily="monospace">
+        <text x={toX(troughIdx) + 4} y={toY(trough.v) + 14} fill="#cbd5e1" fontSize="10.5" fontFamily="monospace">
           ▼ Low {trough.v.toFixed(1)}ft {fmt(trough.t)}
         </text>
       </svg>
+      </div>
     </div>
   );
 }

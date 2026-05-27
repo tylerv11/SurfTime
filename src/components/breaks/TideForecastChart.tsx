@@ -8,7 +8,7 @@ interface Point {
   type?: "H" | "L";
 }
 
-export default function TideForecastChart({ station }: { station?: string }) {
+export default function TideForecastChart({ station, modelName }: { station?: string; modelName?: string }) {
   const [points, setPoints] = useState<Point[]>([]);
   const [highsLows, setHighsLows] = useState<Point[]>([]);
 
@@ -17,7 +17,7 @@ export default function TideForecastChart({ station }: { station?: string }) {
     fetch(`/api/tides?station=${station}`)
       .then((r) => r.json())
       .then((d) => {
-        setPoints((d.predictions ?? []).slice(0, 72));
+        setPoints((d.predictions ?? []).slice(0, 96));
         setHighsLows((d.highs_lows ?? []).slice(0, 12));
       })
       .catch(() => {
@@ -27,13 +27,13 @@ export default function TideForecastChart({ station }: { station?: string }) {
   }, [station]);
 
   if (!station) return null;
-  if (!points.length) return <div className="text-[11px] text-slate-500 font-mono">Loading 3-day tide forecast…</div>;
+  if (!points.length) return <div className="text-[11px] text-slate-500 font-mono">Loading 4-day tide forecast…</div>;
 
   const values = points.map((p) => Number.parseFloat(p.v)).filter((v) => Number.isFinite(v));
   const min = Math.min(...values);
   const max = Math.max(...values);
   const span = Math.max(max - min, 0.1);
-  const width = 780;
+  const width = 1040;
   const height = 150;
   const leftPad = 30;
   const rightPad = 10;
@@ -69,14 +69,18 @@ export default function TideForecastChart({ station }: { station?: string }) {
 
   return (
     <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-2">
-      <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-mono mb-1">Tide Forecast (next 3 days)</div>
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-32">
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <div className="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-mono">High/Low Tide Forecast</div>
+        <div className="text-[11px] text-slate-500 font-mono">Model: {modelName ?? "weighted-rules-v1"}</div>
+      </div>
+      <div className="overflow-x-auto">
+      <svg viewBox={`0 0 ${width} ${height}`} className="min-w-[980px] w-full h-32">
         {yTicks.map((tick) => {
           const y = toY(tick);
           return (
             <g key={`y-${tick}`}>
               <line x1={leftPad} x2={width - rightPad} y1={y} y2={y} stroke="rgba(148,163,184,0.14)" strokeWidth="1" />
-              <text x={2} y={y + 3} fill="#64748b" fontSize="8.5" fontFamily="monospace">
+              <text x={2} y={y + 4} fill="#64748b" fontSize="10" fontFamily="monospace">
                 {tick.toFixed(1)}ft
               </text>
             </g>
@@ -90,11 +94,11 @@ export default function TideForecastChart({ station }: { station?: string }) {
           return (
             <g key={`tick-${p.t}`}>
               <line x1={x} x2={x} y1={height - 18} y2={height - 10} stroke="rgba(148,163,184,0.35)" strokeWidth="1" />
-              <text x={x} y={height - 1} fill="#64748b" fontSize="8.5" fontFamily="monospace" textAnchor="middle">
+              <text x={x} y={height - 1} fill="#64748b" fontSize="10" fontFamily="monospace" textAnchor="middle">
                 {label}
               </text>
               {hour === 6 && (
-                <text x={x} y={10} fill="#64748b" fontSize="8.5" fontFamily="monospace" textAnchor="middle">
+                <text x={x} y={10} fill="#64748b" fontSize="10" fontFamily="monospace" textAnchor="middle">
                   {day}
                 </text>
               )}
@@ -113,13 +117,14 @@ export default function TideForecastChart({ station }: { station?: string }) {
           return (
             <g key={`marker-${p.t}-${p.type}`}>
               <circle cx={x} cy={y} r="3" fill={isHigh ? "#f59e0b" : "#60a5fa"} />
-              <text x={x + 4} y={ty} fill="#cbd5e1" fontSize="9" fontFamily="monospace">
+              <text x={x + 4} y={ty} fill="#cbd5e1" fontSize="10.5" fontFamily="monospace">
                 {isHigh ? "▲" : "▼"} {label}
               </text>
             </g>
           );
         })}
       </svg>
+      </div>
       <div className="flex justify-between text-[10px] text-slate-600 font-mono">
         <span>Curve shows hourly levels</span>
         <span>High/low timestamps are exact</span>
