@@ -125,6 +125,7 @@ export default function Home() {
   const [timeWindow, setTimeWindow] = useState<TimeWindow>(getDefaultWindow);
   const [regionFilter, setRegionFilter] = useState("all");
   const [sortBy, setSortBy] = useState<SortBy>("score");
+  const [viewerLocation, setViewerLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const relativeTime = useRelativeTime(data?.updated_at ?? null);
 
@@ -144,6 +145,34 @@ export default function Home() {
     return () => clearInterval(id);
   }, [fetchData]);
 
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setViewerLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+      },
+      () => {},
+      { maximumAge: 30 * 60 * 1000, timeout: 5000 }
+    );
+  }, []);
+
+  function distanceKm(a: BreakCondition) {
+    if (!viewerLocation) return Number.POSITIVE_INFINITY;
+    const toRad = (value: number) => (value * Math.PI) / 180;
+    const r = 6371;
+    const dLat = toRad(a.lat - viewerLocation.lat);
+    const dLng = toRad(a.lng - viewerLocation.lng);
+    const lat1 = toRad(viewerLocation.lat);
+    const lat2 = toRad(a.lat);
+    const h =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+    return 2 * r * Math.asin(Math.sqrt(h));
+  }
+
   const windowedBreaks = data?.breaks.map((b) => getBreakForWindow(b, timeWindow)) ?? [];
 
   const activeFilter = REGION_FILTERS.find((f) => f.id === regionFilter)!;
@@ -153,7 +182,9 @@ export default function Home() {
 
   const sortedBreaks = [...filteredBreaks].sort((a, b) => {
     if (sortBy === "wave_height") return (b.wave_height_ft ?? 0) - (a.wave_height_ft ?? 0);
-    return (b.score ?? 0) - (a.score ?? 0);
+    const scoreDelta = (b.score ?? 0) - (a.score ?? 0);
+    if (scoreDelta !== 0) return scoreDelta;
+    return viewerLocation ? distanceKm(a) - distanceKm(b) : 0;
   });
 
   const selectedBreak = sortedBreaks.find((b) => b.break_id === selected) ?? null;

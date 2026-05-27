@@ -26,6 +26,7 @@ interface SeriesConfig {
   color: string;
   value: (row: ForecastRow) => number | null;
   format: (row: ForecastRow) => string;
+  unit: string;
 }
 
 interface Props {
@@ -46,6 +47,7 @@ const SERIES: SeriesConfig[] = [
     color: "#60a5fa",
     value: (row) => row.score,
     format: (row) => `${row.score ?? "?"}/10`,
+    unit: "0-10",
   },
   {
     key: "wind",
@@ -56,6 +58,7 @@ const SERIES: SeriesConfig[] = [
       row.wind_speed_mph !== null
         ? `${row.wind_speed_mph}mph ${row.wind_direction ?? ""}`.trim()
         : "—",
+    unit: "mph",
   },
   {
     key: "wave",
@@ -68,6 +71,7 @@ const SERIES: SeriesConfig[] = [
       const dir = row.wave_direction ? ` ${row.wave_direction}` : "";
       return `${size}${period}${dir}`.trim();
     },
+    unit: "ft",
   },
   {
     key: "tide",
@@ -79,6 +83,7 @@ const SERIES: SeriesConfig[] = [
       const height = row.tide_height_ft !== null ? `${row.tide_height_ft.toFixed(1)}ft` : "";
       return `${stage}${height ? ` · ${height}` : ""}`;
     },
+    unit: "ft",
   },
   {
     key: "temp",
@@ -86,6 +91,7 @@ const SERIES: SeriesConfig[] = [
     color: "#22c55e",
     value: (row) => row.water_temp_f,
     format: (row) => (row.water_temp_f !== null ? `${row.water_temp_f}°F` : "—"),
+    unit: "°F",
   },
 ];
 
@@ -126,6 +132,17 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+function formatProjectionSummary(rows: ForecastRow[]) {
+  const dawn = rows[0];
+  const morning = rows[1];
+  const afternoon = rows[2];
+  return [
+    `${dawn.label} ${dawn.score ?? "?"}/10`,
+    `${morning.label} ${morning.score ?? "?"}/10`,
+    `${afternoon.label} ${afternoon.score ?? "?"}/10`,
+  ].join(" · ");
+}
+
 export default function BreakForecastChart({ break_, selectedWindow }: Props) {
   const rows = buildRows(break_);
   const [visibleSeries, setVisibleSeries] = useState<Record<SeriesKey, boolean>>({
@@ -137,144 +154,159 @@ export default function BreakForecastChart({ break_, selectedWindow }: Props) {
   });
 
   const selectedIndex = selectedWindow ? WINDOW_ORDER.findIndex((window) => window.id === selectedWindow) : -1;
-  const sharedX = [0.17, 0.5, 0.83];
-  const swells = `${break_.wave_direction ?? "—"}${break_.period_s ? ` · ${break_.period_s}s` : ""}`;
+  const chartWidth = 780;
+  const chartHeight = 320;
+  const left = 54;
+  const right = 18;
+  const top = 24;
+  const bottom = 36;
+  const innerWidth = chartWidth - left - right;
+  const innerHeight = chartHeight - top - bottom;
+  const xPositions = [0.15, 0.5, 0.85].map((factor) => left + factor * innerWidth);
+  const seriesList = SERIES.filter((series) => visibleSeries[series.key]);
+  const summary = formatProjectionSummary(rows);
 
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <div className="text-[10px] uppercase tracking-[0.22em] text-slate-500 font-mono">Forecast by daypart</div>
-          <div className="text-[11px] text-slate-600 mt-1">Dawn, 8-12pm, and 12-3pm. Toggle lines below to compare metrics.</div>
+          <div className="text-[11px] text-slate-600 mt-1">
+            These values are projections from the current forecast inputs, not historical readings.
+          </div>
         </div>
-        <div className="text-[10px] text-slate-500 font-mono">Swell {swells}</div>
+        <div className="text-[10px] text-slate-500 font-mono">Swell {break_.wave_direction ?? "—"}{break_.period_s ? ` · ${break_.period_s}s` : ""}</div>
       </div>
 
-      <div className="mt-3 flex flex-wrap gap-2">
-        {SERIES.map((series) => (
-          <button
-            key={series.key}
-            type="button"
-            onClick={() => setVisibleSeries((current) => ({ ...current, [series.key]: !current[series.key] }))}
-            className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[10px] font-mono transition-colors ${
-              visibleSeries[series.key]
-                ? "border-slate-600 bg-slate-800 text-white"
-                : "border-slate-800 bg-slate-950 text-slate-600"
-            }`}
-          >
-            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: series.color }} />
-            {series.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-3 space-y-3">
-        {SERIES.map((series, seriesIndex) => {
-          if (!visibleSeries[series.key]) return null;
-          const values = rows.map((row) => series.value(row));
-          const range = getNumericRange(values);
-          const width = 640;
-          const height = 118;
-          const left = 34;
-          const right = 18;
-          const top = 18;
-          const bottom = 34;
-          const innerWidth = width - left - right;
-          const innerHeight = height - top - bottom;
-          const xPositions = sharedX.map((factor) => left + factor * innerWidth);
-          const points = rows.map((row, index) => {
-            const raw = series.value(row);
-            const y = raw === null
-              ? null
-              : top + (1 - clamp((raw - range.min) / (range.max - range.min), 0, 1)) * innerHeight;
-            return {
-              row,
-              index,
-              raw,
-              x: xPositions[index],
-              y,
-            };
-          });
-          const path = points
-            .filter((point) => point.y !== null)
-            .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
-            .join(" ");
-
-          return (
-            <div
-              key={series.key}
-              className="grid gap-2 md:grid-cols-[72px_minmax(0,1fr)] md:items-start"
-            >
-              <div className="pt-2">
-                <div className="text-[10px] uppercase tracking-[0.22em] text-slate-500 font-mono">{series.label}</div>
-                <div className="text-[10px] text-slate-600 mt-1">
-                  {series.key === "score" ? "0-10" : series.key === "wind" ? "mph" : series.key === "wave" ? "ft" : series.key === "tide" ? "ft" : "°F"}
+      <div className="mt-3 rounded-lg border border-slate-800 bg-slate-950/80 p-2">
+        <div className="grid grid-cols-3 gap-2">
+          {rows.map((row, index) => {
+            const active = index === selectedIndex;
+            return (
+              <div
+                key={row.id}
+                className={`rounded-md border px-2 py-2 text-left transition-colors ${
+                  active ? "border-slate-600 bg-slate-800/90" : "border-slate-800 bg-slate-950/60"
+                }`}
+              >
+                <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 font-mono">{row.label}</div>
+                <div className="mt-1 flex items-end justify-between gap-2">
+                  <div>
+                    <div className="text-sm font-semibold text-white">{row.score ?? "?"}/10</div>
+                    <div className="text-[10px] text-slate-500">{row.hours}</div>
+                  </div>
+                  <div className="text-[10px] text-slate-400 text-right">
+                    <div>{row.wave_height_ft !== null ? `${row.wave_height_ft}ft` : "—"}{row.period_s ? ` ${row.period_s}s` : ""}</div>
+                    <div>{row.wind_speed_mph !== null ? `${row.wind_speed_mph}mph` : "—"} {row.wind_direction ?? ""}</div>
+                  </div>
                 </div>
               </div>
+            );
+          })}
+        </div>
+        <div className="mt-2 text-[10px] text-slate-600 font-mono">Projected daypart banner: {summary}</div>
+      </div>
 
-              <div className="relative rounded-lg border border-slate-800 bg-slate-950/70 px-2 pb-6 pt-2 overflow-hidden">
-                {selectedIndex >= 0 && (
-                  <div
-                    className="absolute top-0 bottom-0 bg-slate-700/10 pointer-events-none"
-                    style={{
-                      left: `${sharedX[selectedIndex] * 100 - 13}%`,
-                      width: "26%",
-                    }}
-                  />
-                )}
-
-                <svg viewBox={`0 0 ${width} ${height}`} className="relative z-[1] h-[118px] w-full overflow-visible">
-                  <defs>
-                    <linearGradient id={`line-${series.key}`} x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor={series.color} stopOpacity="0.95" />
-                      <stop offset="100%" stopColor={series.color} stopOpacity="0.35" />
-                    </linearGradient>
-                  </defs>
-
-                  {[0, 1, 2, 3].map((tick) => {
-                    const y = top + (innerHeight / 3) * tick;
-                    return <line key={tick} x1={left} x2={width - right} y1={y} y2={y} stroke="rgba(148,163,184,0.12)" strokeWidth="1" />;
-                  })}
-
-                  {path && (
-                    <path d={path} fill="none" stroke={`url(#line-${series.key})`} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                  )}
-
-                  {points.map((point, index) => {
-                    if (point.y === null || point.raw === null) return null;
-                    const above = index % 2 === 0;
-                    const labelOffset = series.key === "score" ? 12 : series.key === "wind" ? 14 : series.key === "wave" ? 16 : series.key === "tide" ? 14 : 13;
-                    return (
-                      <g key={`${series.key}-${point.row.id}`}>
-                        <circle cx={point.x} cy={point.y} r="4.5" fill={series.color} stroke="rgba(15,23,42,0.95)" strokeWidth="2" />
-                        <text
-                          x={point.x}
-                          y={point.y + (above ? -labelOffset : labelOffset + 2)}
-                          fill="#e2e8f0"
-                          fontSize="10"
-                          fontFamily="monospace"
-                          textAnchor="middle"
-                        >
-                          {series.format(point.row)}
-                        </text>
-                        <text
-                          x={point.x}
-                          y={height - 8}
-                          fill={point.index === selectedIndex ? "#cbd5e1" : "#64748b"}
-                          fontSize="9"
-                          fontFamily="monospace"
-                          textAnchor="middle"
-                        >
-                          {point.row.label}
-                        </text>
-                      </g>
-                    );
-                  })}
-                </svg>
-              </div>
-            </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <span className="text-[10px] uppercase tracking-[0.22em] text-slate-500 font-mono">Toggle Lines:</span>
+        {SERIES.map((series) => {
+          const active = visibleSeries[series.key];
+          return (
+            <button
+              key={series.key}
+              type="button"
+              onClick={() => setVisibleSeries((current) => ({ ...current, [series.key]: !current[series.key] }))}
+              className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[10px] font-mono transition-colors ${
+                active ? "border-slate-600 bg-slate-800 text-white" : "border-slate-800 bg-slate-950 text-slate-600"
+              }`}
+            >
+              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: series.color }} />
+              {series.label}
+            </button>
           );
         })}
+      </div>
+
+      <div className="mt-3 relative rounded-lg border border-slate-800 bg-slate-950/70 px-2 pb-8 pt-3 overflow-hidden">
+        {selectedIndex >= 0 && (
+          <div
+            className="absolute top-0 bottom-0 bg-slate-700/10 pointer-events-none"
+            style={{
+              left: `${selectedIndex === 0 ? "0" : selectedIndex === 1 ? "33.33" : "66.66"}%`,
+              width: "33.33%",
+            }}
+          />
+        )}
+
+        <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="relative z-[1] h-[320px] w-full overflow-visible">
+          {seriesList.length > 0 &&
+            [0, 1, 2, 3].map((tick) => {
+              const y = top + (innerHeight / 3) * tick;
+              return <line key={tick} x1={left} x2={chartWidth - right} y1={y} y2={y} stroke="rgba(148,163,184,0.12)" strokeWidth="1" />;
+            })}
+
+          {seriesList.map((series) => {
+            const values = rows.map((row) => series.value(row));
+            const range = getNumericRange(values);
+            const points = rows.map((row, index) => {
+              const raw = series.value(row);
+              const y = raw === null
+                ? null
+                : top + (1 - clamp((raw - range.min) / (range.max - range.min), 0, 1)) * innerHeight;
+              return { row, index, raw, x: xPositions[index], y };
+            });
+            const path = points
+              .filter((point) => point.y !== null)
+              .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x} ${point.y}`)
+              .join(" ");
+
+            return (
+              <g key={series.key}>
+                {path && (
+                  <path d={path} fill="none" stroke={series.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.92" />
+                )}
+                {points.map((point, pointIndex) => {
+                  if (point.y === null || point.raw === null) return null;
+                  const labelAbove = pointIndex !== 1;
+                  const verticalOffset = 14 + seriesList.findIndex((entry) => entry.key === series.key) * 10;
+                  const labelY = point.y + (labelAbove ? -(verticalOffset + 4) : verticalOffset + 10);
+                  const labelX = point.x + (series.key === "score" ? 0 : series.key === "wind" ? 4 : series.key === "wave" ? -4 : 0);
+                  return (
+                    <g key={`${series.key}-${point.row.id}`}>
+                      <circle cx={point.x} cy={point.y} r="4.5" fill={series.color} stroke="rgba(15,23,42,0.95)" strokeWidth="2" />
+                      <circle cx={point.x} cy={point.y} r="10" fill="transparent" />
+                      <text
+                        x={labelX}
+                        y={labelY}
+                        fill="#e2e8f0"
+                        fontSize="10"
+                        fontFamily="monospace"
+                        textAnchor="middle"
+                      >
+                        {series.format(point.row)}
+                      </text>
+                    </g>
+                  );
+                })}
+              </g>
+            );
+          })}
+
+          {rows.map((row, index) => (
+            <g key={row.id}>
+              <text
+                x={xPositions[index]}
+                y={chartHeight - 10}
+                fill={index === selectedIndex ? "#cbd5e1" : "#64748b"}
+                fontSize="10"
+                fontFamily="monospace"
+                textAnchor="middle"
+              >
+                {row.label}
+              </text>
+            </g>
+          ))}
+        </svg>
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2 text-[10px] text-slate-600 font-mono">

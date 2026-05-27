@@ -215,6 +215,9 @@ export default function BreakMap({ breaks, selected, onSelect, focusLabel }: Pro
         .leaflet-control-zoom a:hover { background: rgba(30,41,59,0.95) !important; }
         .leaflet-control-attribution { background: rgba(15,23,42,0.7) !important; color: #64748b !important; }
         .leaflet-control-attribution a { color: #94a3b8 !important; }
+        .leaflet-tile {
+          filter: sepia(0.55) saturate(0.85) hue-rotate(330deg) brightness(0.88) contrast(0.95);
+        }
       `}</style>
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
       <div ref={mapRef} className="w-full h-full" style={{ minHeight: "400px" }} />
