@@ -127,6 +127,7 @@ export default function Home() {
   const [regionFilter, setRegionFilter] = useState("all");
   const [sortBy, setSortBy] = useState<SortBy>("score");
   const [viewerLocation, setViewerLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationPromptDismissed, setLocationPromptDismissed] = useState(false);
 
   const relativeTime = useRelativeTime(data?.updated_at ?? null);
 
@@ -146,7 +147,7 @@ export default function Home() {
     return () => clearInterval(id);
   }, [fetchData]);
 
-  useEffect(() => {
+  const requestLocation = useCallback(() => {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -154,6 +155,7 @@ export default function Home() {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
+        setLocationPromptDismissed(true);
       },
       () => {},
       { maximumAge: 30 * 60 * 1000, timeout: 5000 }
@@ -189,11 +191,6 @@ export default function Home() {
   });
 
   const selectedBreak = sortedBreaks.find((b) => b.break_id === selected) ?? null;
-  const bestBreaks = filteredBreaks
-    .filter((b) => b.rating === "epic" || b.rating === "good")
-    .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-    .slice(0, 4);
-
   return (
     <main className="min-h-screen bg-slate-950 text-white flex flex-col">
       {/* Header */}
@@ -280,7 +277,29 @@ export default function Home() {
       ) : (
         <div className="flex flex-col flex-1 overflow-hidden">
           {/* Best breaks row (map view only) */}
-          {view === "map" && bestBreaks.length > 0 && (
+          {view === "map" && !viewerLocation && !locationPromptDismissed && (
+            <div className="px-3 py-2 border-b border-slate-800 bg-slate-900/40 flex items-center justify-between gap-2">
+              <p className="text-[11px] text-slate-400">
+                Used to recommend beaches near you, not necessary.
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={requestLocation}
+                  className="text-[11px] px-2 py-1 rounded-sm border border-slate-700 bg-slate-900 text-slate-200 hover:border-slate-500"
+                >
+                  Use location
+                </button>
+                <button
+                  onClick={() => setLocationPromptDismissed(true)}
+                  className="text-[11px] px-2 py-1 rounded-sm border border-slate-800 bg-slate-950 text-slate-500 hover:text-slate-300"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
+
+          {view === "map" && sortedBreaks.length > 0 && (
             <div className="flex gap-2 px-3 py-2 overflow-x-auto border-b border-slate-800 flex-shrink-0">
               <span className="text-[10px] text-slate-600 self-center whitespace-nowrap uppercase tracking-wide">
                 {viewerLocation ? "Nearby waves" : "Wave band"}

@@ -163,6 +163,7 @@ export default function BreakForecastChart({ break_, selectedWindow }: Props) {
     <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
+          <div className="text-[10px] uppercase tracking-[0.22em] text-cyan-400/70 font-mono">Future Projection Forecast</div>
           <div className="text-[10px] uppercase tracking-[0.22em] text-slate-500 font-mono">Forecast by daypart</div>
           <div className="text-[11px] text-slate-600 mt-1">
             These values are projections from the current forecast inputs, not historical readings.
@@ -276,7 +277,13 @@ export default function BreakForecastChart({ break_, selectedWindow }: Props) {
       <div className="mt-3 flex flex-wrap gap-2 text-[10px] text-slate-600 font-mono">
         <span>Wave {break_.wave_height_ft !== null ? `${break_.wave_height_ft}ft` : "—"}{break_.period_s ? ` ${break_.period_s}s` : ""}</span>
         <span>Swell {break_.wave_direction ?? "—"}</span>
-        <span>Temp {break_.water_temp_f !== null ? `${break_.water_temp_f}°F` : "—"}</span>
+        <span>
+          Projected Temp {
+            rows.every((r) => (r.air_temp_f ?? r.water_temp_f) === null)
+              ? "—"
+              : `${Math.min(...rows.map((r) => r.air_temp_f ?? r.water_temp_f).filter((v): v is number => v !== null))}–${Math.max(...rows.map((r) => r.air_temp_f ?? r.water_temp_f).filter((v): v is number => v !== null))}°F`
+          }
+        </span>
       </div>
     </div>
   );
