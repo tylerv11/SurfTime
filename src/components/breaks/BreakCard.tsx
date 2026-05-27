@@ -3,6 +3,7 @@
 import { BreakCondition, TimeWindow } from "@/app/page";
 import BreakForecastChart from "@/components/breaks/BreakForecastChart";
 import TideForecastChart from "@/components/breaks/TideForecastChart";
+import WaveForecastChart from "@/components/breaks/WaveForecastChart";
 
 const RATING_COLOR: Record<string, string> = {
   epic:              "text-purple-400 bg-purple-500/10 border-purple-500/30",
@@ -98,6 +99,9 @@ export default function BreakCard({ break_: b, expanded, onSelect, timeWindow }:
       {expanded && (
         <div className="mt-3 pt-3 border-t border-slate-800">
           <BreakForecastChart break_={b} selectedWindow={timeWindow} />
+          <div className="mt-3">
+            <WaveForecastChart lat={b.lat} lng={b.lng} />
+          </div>
           <div className="mt-3">
             <TideForecastChart station={b.tide_station} />
           </div>

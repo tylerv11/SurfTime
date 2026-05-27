@@ -77,14 +77,6 @@ export default function TideForecastChart({ station }: { station?: string }) {
           );
         })}
       </svg>
-      <div className="mt-2 text-[10px] text-slate-500 font-mono">Exact highs/lows:</div>
-      <div className="mt-1 grid grid-cols-2 gap-1 text-[10px] text-slate-400 font-mono">
-        {highsLows.slice(0, 8).map((p) => (
-          <div key={`${p.t}-${p.type}`} className="truncate">
-            {p.type === "H" ? "▲ High" : "▼ Low"} {p.v}ft @ {p.t.slice(5, 16)}
-          </div>
-        ))}
-      </div>
       <div className="flex justify-between text-[10px] text-slate-600 font-mono">
         <span>Curve shows hourly levels</span>
         <span>High/low timestamps are exact</span>
