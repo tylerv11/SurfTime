@@ -179,6 +179,9 @@ export default function Home() {
             <p className="text-[11px] text-slate-500 leading-none mt-0.5 hidden sm:block tracking-[0.22em] uppercase">
               California Surf Conditions
             </p>
+            <p className="text-[10px] text-slate-600 leading-none mt-1 hidden md:block tracking-wide">
+              Daily refresh: 6:00 AM Pacific
+            </p>
           </div>
         </div>
 

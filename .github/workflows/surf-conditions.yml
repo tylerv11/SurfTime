@@ -2,8 +2,9 @@ name: Update Surf Conditions
 
 on:
   schedule:
-    - cron: "0 14 * * *"  # 7am PT daily (UTC-7)
-  workflow_dispatch:       # manual trigger from GitHub UI
+    - cron: "0 13 * * *"
+    - cron: "0 14 * * *"
+  workflow_dispatch: # manual trigger from GitHub UI
 
 jobs:
   update:
@@ -14,6 +15,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4.2.2
+
+      - name: Gate scheduled runs to 6am Pacific
+        if: github.event_name == 'schedule'
+        run: |
+          current_hour=$(TZ=America/Los_Angeles date +%H)
+          if [ "$current_hour" != "06" ]; then
+            echo "Skipping scheduled run outside 6:00 AM Pacific (current hour: $current_hour)."
+            exit 0
+          fi
 
       - uses: actions/setup-python@v5.6.0
         with:
