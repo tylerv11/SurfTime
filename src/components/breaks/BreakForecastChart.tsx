@@ -4,9 +4,10 @@ import { useState } from "react";
 import type { BreakCondition, TimeWindow } from "@/app/page";
 
 type SeriesKey = "score" | "wind" | "wave" | "tide" | "temp";
+type DaypartWindow = "early_morning" | "morning" | "afternoon";
 
 interface ForecastRow {
-  id: TimeWindow;
+  id: DaypartWindow;
   label: string;
   hours: string;
   score: number | null;
@@ -35,7 +36,7 @@ interface Props {
   selectedWindow?: TimeWindow;
 }
 
-const WINDOW_ORDER: { id: TimeWindow; label: string; hours: string }[] = [
+const WINDOW_ORDER: { id: DaypartWindow; label: string; hours: string }[] = [
   { id: "early_morning", label: "Dawn", hours: "5-8am" },
   { id: "morning", label: "8-12pm", hours: "8am-12pm" },
   { id: "afternoon", label: "12-3pm", hours: "12-3pm" },

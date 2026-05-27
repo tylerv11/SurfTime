@@ -51,9 +51,10 @@ interface ConditionsData {
   updated_at: string | null;
 }
 
-export type TimeWindow = "early_morning" | "morning" | "afternoon";
+export type TimeWindow = "right_now" | "early_morning" | "morning" | "afternoon";
 
 const TIME_WINDOWS: { id: TimeWindow; label: string; hours: string }[] = [
+  { id: "right_now", label: "Right now", hours: "Live" },
   { id: "early_morning", label: "Dawn", hours: "5–8 am" },
   { id: "morning", label: "Morning", hours: "8 am–12 pm" },
   { id: "afternoon", label: "Afternoon", hours: "12–3 pm" },
@@ -128,6 +129,7 @@ function getNearestBreak(
 }
 
 export function getBreakForWindow(b: BreakCondition, window: TimeWindow): BreakCondition {
+  if (window === "right_now") return b;
   const win = b.time_windows?.[window];
   if (!win) return b;
   return {
