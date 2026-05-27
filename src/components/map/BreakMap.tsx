@@ -65,7 +65,7 @@ export default function BreakMap({ breaks, selected, onSelect, focusLabel }: Pro
         zoomControl: true,
       });
 
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
         attribution:
           '© <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors © <a href="https://carto.com">CARTO</a>',
         maxZoom: 19,
@@ -216,7 +216,7 @@ export default function BreakMap({ breaks, selected, onSelect, focusLabel }: Pro
         .leaflet-control-attribution { background: rgba(15,23,42,0.7) !important; color: #64748b !important; }
         .leaflet-control-attribution a { color: #94a3b8 !important; }
         .leaflet-tile {
-          filter: sepia(0.55) saturate(0.85) hue-rotate(330deg) brightness(0.88) contrast(0.95);
+          filter: sepia(0.45) saturate(0.9) hue-rotate(335deg) brightness(0.96) contrast(1.02);
         }
       `}</style>
       <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
