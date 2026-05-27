@@ -67,6 +67,7 @@ def run_all():
                         "wind_direction": win_wind["wind_direction"],
                         "tide_stage": win_tide["tide_stage"],
                         "tide_height_ft": tide_win.get("current_height_ft"),
+                        "air_temp_f": wind_win.get("air_temp_f"),
                     }
 
             result = {

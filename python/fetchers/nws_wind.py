@@ -37,6 +37,7 @@ def fetch_wind(office: str, x: int, y: int) -> dict:
                 "wind_direction": direction,
                 "wind_quality": rate_wind_for_surf(direction, speed),
                 "short_forecast": period.get("shortForecast", ""),
+                "air_temp_f": period.get("temperature"),
             }
 
     return {
@@ -45,6 +46,7 @@ def fetch_wind(office: str, x: int, y: int) -> dict:
         "wind_direction": wind_dir,
         "wind_quality": rate_wind_for_surf(wind_dir, wind_speed_mph),
         "short_forecast": now.get("shortForecast", ""),
+        "air_temp_f": now.get("temperature"),
         "next_6h": [
             {
                 "start": p["startTime"],

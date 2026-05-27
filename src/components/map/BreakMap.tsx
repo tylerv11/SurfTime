@@ -32,6 +32,14 @@ function markerHtml(color: string, size: number, isSelected: boolean, rating: st
   return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};${border}${glow}${pulse}cursor:pointer;transition:all 0.15s;"></div>`;
 }
 
+function cardinalToDegrees(dir?: string | null) {
+  const m: Record<string, number> = {
+    N: 0, NNE: 22.5, NE: 45, ENE: 67.5, E: 90, ESE: 112.5, SE: 135, SSE: 157.5,
+    S: 180, SSW: 202.5, SW: 225, WSW: 247.5, W: 270, WNW: 292.5, NW: 315, NNW: 337.5,
+  };
+  return dir ? m[dir] : undefined;
+}
+
 interface Props {
   breaks: BreakCondition[];
   selected: string | null;
@@ -134,7 +142,11 @@ export default function BreakMap({ breaks, selected, onSelect, focusLabel }: Pro
       marker.setIcon(
         L.divIcon({
           className: "",
-          html: markerHtml(color, size, isSelected, b.rating),
+          html: `${markerHtml(color, size, isSelected, b.rating)}${
+            isSelected && cardinalToDegrees(b.wave_direction) !== undefined
+              ? `<div style="position:relative;left:${size / 2}px;top:-${size + 12}px;transform:translateX(-50%) rotate(${cardinalToDegrees(b.wave_direction)}deg);transform-origin:50% 85%;font-size:14px;color:#e2e8f0;text-shadow:0 1px 3px rgba(0,0,0,0.8)">↑</div>`
+              : ""
+          }`,
           iconSize: [size, size],
           iconAnchor: [size / 2, size / 2],
         })
@@ -157,7 +169,7 @@ export default function BreakMap({ breaks, selected, onSelect, focusLabel }: Pro
       if (isSelected) marker.openPopup();
       else marker.closePopup();
     });
-  }, [breaks, selected]);
+  }, [breaks, selected, onSelect]);
 
   // Pan to selected break
   useEffect(() => {
@@ -191,7 +203,7 @@ export default function BreakMap({ breaks, selected, onSelect, focusLabel }: Pro
     map.fitBounds(bounds, {
       padding: [36, 36],
       maxZoom: focusLabel === "All" ? 7 : 10,
-      animate: true,
+      animate: false,
     });
   }, [breaks, focusLabel, mapReady, selected]);
 

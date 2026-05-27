@@ -10,6 +10,7 @@ const breakMetadata = new Map(
       break_name: break_.name,
       lat: break_.lat,
       lng: break_.lng,
+      tide_station: break_.tide_station,
     },
   ])
 );

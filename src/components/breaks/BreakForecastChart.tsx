@@ -18,6 +18,7 @@ interface ForecastRow {
   tide_stage: string | null;
   tide_height_ft: number | null;
   water_temp_f: number | null;
+  air_temp_f: number | null;
 }
 
 interface SeriesConfig {
@@ -89,8 +90,11 @@ const SERIES: SeriesConfig[] = [
     key: "temp",
     label: "Temp",
     color: "#22c55e",
-    value: (row) => row.water_temp_f,
-    format: (row) => (row.water_temp_f !== null ? `${row.water_temp_f}°F` : "—"),
+    value: (row) => row.air_temp_f ?? row.water_temp_f,
+    format: (row) => {
+      const v = row.air_temp_f ?? row.water_temp_f;
+      return v !== null ? `${v}°F` : "—";
+    },
     unit: "°F",
   },
 ];
@@ -111,6 +115,7 @@ function buildRows(b: BreakCondition): ForecastRow[] {
       tide_stage: win?.tide_stage ?? b.tide_stage ?? null,
       tide_height_ft: win?.tide_height_ft ?? null,
       water_temp_f: b.water_temp_f,
+      air_temp_f: win?.air_temp_f ?? null,
     };
   });
 }

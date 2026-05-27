@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from "react";
 import BreakMap from "@/components/map/BreakMap";
 import BreakCard from "@/components/breaks/BreakCard";
-import DailySummary from "@/components/briefing/DailySummary";
 
 export interface TimeWindowData {
   score: number | null;
@@ -13,6 +12,7 @@ export interface TimeWindowData {
   wind_direction: string;
   tide_stage: string;
   tide_height_ft: number | null;
+  air_temp_f?: number | null;
 }
 
 export interface BreakCondition {
@@ -31,6 +31,7 @@ export interface BreakCondition {
   wind_direction: string;
   tide_stage: string;
   water_temp_f: number | null;
+  tide_station?: string;
   briefing: string;
   updated_at: string;
   time_windows?: {
@@ -278,27 +279,29 @@ export default function Home() {
         </div>
       ) : (
         <div className="flex flex-col flex-1 overflow-hidden">
-          {data.daily_summary && (
-            <DailySummary summary={data.daily_summary} updatedAt={data.updated_at} />
-          )}
-
           {/* Best breaks row (map view only) */}
           {view === "map" && bestBreaks.length > 0 && (
-            <div className="flex gap-2 px-3 py-2 overflow-x-auto border-b border-slate-800 flex-shrink-0 lg:hidden">
-              <span className="text-[10px] text-slate-600 self-center whitespace-nowrap uppercase tracking-wide">Best</span>
-              {bestBreaks.map((b) => (
+            <div className="flex gap-2 px-3 py-2 overflow-x-auto border-b border-slate-800 flex-shrink-0">
+              <span className="text-[10px] text-slate-600 self-center whitespace-nowrap uppercase tracking-wide">
+                {viewerLocation ? "Nearby waves" : "Wave band"}
+              </span>
+              {(viewerLocation ? [...sortedBreaks].sort((a, b) => distanceKm(a) - distanceKm(b)) : [...sortedBreaks].sort((a, b) => (b.wave_height_ft ?? 0) - (a.wave_height_ft ?? 0)))
+                .slice(0, 10)
+                .map((b) => {
+                  const h = b.wave_height_ft ?? 0;
+                  const bandColor = h >= 4 ? "bg-emerald-500" : h >= 3 ? "bg-orange-400" : "bg-yellow-400";
+                  const bandText = h >= 4 ? "4-6+ft" : h >= 3 ? "3-4ft" : "2-3ft";
+                  return (
                 <button
                   key={b.break_id}
                   onClick={() => { setSelected(b.break_id); setView("map"); }}
-                  className={`flex-shrink-0 text-xs px-2.5 py-1 rounded-sm border font-mono transition-colors ${
-                    b.rating === "epic"
-                      ? "bg-purple-500/10 border-purple-500/40 text-purple-300"
-                      : "bg-emerald-500/10 border-emerald-500/40 text-emerald-300"
-                  }`}
+                  className="flex-shrink-0 text-xs px-2.5 py-1 rounded-sm border border-slate-700 bg-slate-900/90 font-mono transition-colors hover:border-slate-500"
                 >
-                  {b.break_name} {b.score}/10
+                  <span className={`inline-block w-2 h-2 rounded-full mr-1.5 ${bandColor}`} />
+                  {b.break_name} <span className="text-slate-400">{bandText}</span>
                 </button>
-              ))}
+                );
+              })}
             </div>
           )}
 
@@ -463,10 +466,15 @@ export default function Home() {
 
           {/* Mobile footer */}
           {data.updated_at && (
-            <div className="sm:hidden flex items-center justify-center gap-2 py-2 border-t border-slate-800 text-xs text-slate-600">
-              <span className={`w-1.5 h-1.5 rounded-full ${refreshing ? "bg-yellow-400 animate-pulse" : "bg-emerald-500"}`} />
-              {formatAbsoluteTime(data.updated_at)}
-            </div>
+            <>
+              <div className="sm:hidden flex items-center justify-center gap-2 py-2 border-t border-slate-800 text-xs text-slate-600">
+                <span className={`w-1.5 h-1.5 rounded-full ${refreshing ? "bg-yellow-400 animate-pulse" : "bg-emerald-500"}`} />
+                {formatAbsoluteTime(data.updated_at)}
+              </div>
+              <div className="px-4 py-3 border-t border-slate-800 text-[11px] text-slate-500 bg-slate-950/70">
+                SurfTime pulls buoy, wind, and tide feeds into Supabase, refreshes daily at 6:00 AM Pacific, and serves live via Vercel. Feature ideas: tylervincent@alumni.usc.edu.
+              </div>
+            </>
           )}
         </div>
       )}

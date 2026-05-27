@@ -2,6 +2,7 @@
 
 import { BreakCondition, TimeWindow } from "@/app/page";
 import BreakForecastChart from "@/components/breaks/BreakForecastChart";
+import TideForecastChart from "@/components/breaks/TideForecastChart";
 
 const RATING_COLOR: Record<string, string> = {
   epic:              "text-purple-400 bg-purple-500/10 border-purple-500/30",
@@ -29,12 +30,6 @@ const REGION_LABEL: Record<string, string> = {
   central: "Central Coast",
 };
 
-const WINDOW_LABELS: Record<TimeWindow, string> = {
-  early_morning: "5–8am",
-  morning:       "8–12pm",
-  afternoon:     "12–3pm",
-};
-
 interface Props {
   break_: BreakCondition;
   expanded?: boolean;
@@ -45,8 +40,6 @@ interface Props {
 export default function BreakCard({ break_: b, expanded, onSelect, timeWindow }: Props) {
   const dot = RATING_DOT[b.rating] ?? "bg-slate-500";
   const badge = RATING_COLOR[b.rating] ?? RATING_COLOR.error;
-  const windows = b.time_windows;
-  const hasWindows = !!(windows && (windows.early_morning || windows.morning || windows.afternoon));
 
   return (
     <div
@@ -94,34 +87,6 @@ export default function BreakCard({ break_: b, expanded, onSelect, timeWindow }:
         </div>
       </div>
 
-      {/* Time window pills (list card) */}
-      {!expanded && hasWindows && windows && (
-        <div className="flex gap-1 mt-2.5 border-t border-slate-800 pt-2">
-          {(["early_morning", "morning", "afternoon"] as TimeWindow[]).map((wid) => {
-            const win = windows[wid];
-            if (!win) return null;
-            const active = timeWindow === wid;
-            const activeDot = RATING_DOT[win.rating] ?? "bg-slate-600";
-            return (
-              <div
-                key={wid}
-                className={`flex-1 text-center py-1 px-0.5 rounded-sm text-[10px] font-mono transition-all ${
-                  active ? "bg-slate-800 border border-slate-600 text-white" : "text-slate-600"
-                }`}
-              >
-                <div className="flex items-center justify-center gap-1">
-                  {active && <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${activeDot}`} />}
-                  <span>{WINDOW_LABELS[wid]}</span>
-                </div>
-                <div className={`font-bold mt-0.5 ${active ? "text-slate-200" : "text-slate-600"}`}>
-                  {win.score}/10
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
       {/* Briefing */}
       {(expanded || b.briefing) && (
         <p className={`mt-2.5 text-xs leading-relaxed ${expanded ? "text-slate-300" : "text-slate-500 line-clamp-2"}`}>
@@ -133,6 +98,9 @@ export default function BreakCard({ break_: b, expanded, onSelect, timeWindow }:
       {expanded && (
         <div className="mt-3 pt-3 border-t border-slate-800">
           <BreakForecastChart break_={b} selectedWindow={timeWindow} />
+          <div className="mt-3">
+            <TideForecastChart station={b.tide_station} />
+          </div>
         </div>
       )}
     </div>
