@@ -139,12 +139,16 @@ function clamp(value: number, min: number, max: number) {
 
 export default function BreakForecastChart({ break_, selectedWindow }: Props) {
   const rows = buildRows(break_);
+  const tempValues = rows
+    .map((row) => row.air_temp_f ?? row.water_temp_f)
+    .filter((value): value is number => value !== null);
+  const hasVaryingTemp = new Set(tempValues.map((value) => value.toFixed(1))).size > 1;
   const [visibleSeries, setVisibleSeries] = useState<Record<SeriesKey, boolean>>({
     score: true,
     wind: true,
     wave: true,
     tide: true,
-    temp: true,
+    temp: hasVaryingTemp,
   });
 
   const selectedIndex = selectedWindow ? WINDOW_ORDER.findIndex((window) => window.id === selectedWindow) : -1;
@@ -157,7 +161,11 @@ export default function BreakForecastChart({ break_, selectedWindow }: Props) {
   const innerWidth = chartWidth - left - right;
   const innerHeight = chartHeight - top - bottom;
   const xPositions = [0.15, 0.5, 0.85].map((factor) => left + factor * innerWidth);
-  const seriesList = SERIES.filter((series) => visibleSeries[series.key]);
+  const seriesList = SERIES.filter((series) => {
+    if (series.key === "temp" && !hasVaryingTemp) return false;
+    return visibleSeries[series.key];
+  });
+  const togglableSeries = SERIES.filter((series) => !(series.key === "temp" && !hasVaryingTemp));
 
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
@@ -169,12 +177,15 @@ export default function BreakForecastChart({ break_, selectedWindow }: Props) {
             These values are projections from the current forecast inputs, not historical readings.
           </div>
         </div>
-        <div className="text-[10px] text-slate-500 font-mono">Swell {break_.wave_direction ?? "—"}{break_.period_s ? ` · ${break_.period_s}s` : ""}</div>
+        <div className="text-[10px] text-slate-500 font-mono">
+          Swell {break_.wave_direction ?? "—"}{break_.period_s ? ` · ${break_.period_s}s` : ""}
+          {tempValues.length > 0 ? ` · Temp ${Math.round(tempValues[0])}°F` : ""}
+        </div>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <span className="text-[10px] uppercase tracking-[0.22em] text-slate-500 font-mono">Toggle Lines:</span>
-        {SERIES.map((series) => {
+        {togglableSeries.map((series) => {
           const active = visibleSeries[series.key];
           return (
             <button

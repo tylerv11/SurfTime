@@ -25,10 +25,12 @@ export default function WaveForecastChart({ lat, lng }: { lat: number; lng: numb
   const span = Math.max(max - min, 0.1);
   const width = 780;
   const height = 140;
+  const leftPad = 30;
+  const rightPad = 10;
   const padTop = 10;
   const padBottom = 18;
   const toY = (value: number) => height - ((value - min) / span) * (height - padTop - padBottom) - padBottom;
-  const toX = (index: number) => (index / (points.length - 1)) * width;
+  const toX = (index: number) => leftPad + (index / (points.length - 1)) * (width - leftPad - rightPad);
 
   const path = points.map((p, i) => `${i === 0 ? "M" : "L"}${toX(i)},${toY(p.v)}`).join(" ");
   const axisTicks = points
@@ -43,17 +45,34 @@ export default function WaveForecastChart({ lat, lng }: { lat: number; lng: numb
   const troughIdx = points.findIndex((p) => p.t === trough.t);
   const fmt = (ts: string) =>
     new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", hour12: true }).toLowerCase();
+  const dayFmt = (ts: string) =>
+    new Date(ts).toLocaleDateString("en-US", { weekday: "short", month: "numeric", day: "numeric" });
+  const yTicks = [min, min + span / 2, max];
+  const valueLabels = points
+    .map((p, i) => ({ p, i }))
+    .filter(({ p }) => new Date(p.t).getHours() === 12);
 
   return (
     <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-2">
       <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-mono mb-1">Wave Height Forecast (next 3 days)</div>
       <div className="text-[10px] text-slate-600 font-mono mb-1">Projection from marine forecast model inputs.</div>
       <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-28">
+        {yTicks.map((tick) => {
+          const y = toY(tick);
+          return (
+            <g key={`y-${tick}`}>
+              <line x1={leftPad} x2={width - rightPad} y1={y} y2={y} stroke="rgba(148,163,184,0.14)" strokeWidth="1" />
+              <text x={2} y={y + 3} fill="#64748b" fontSize="8.5" fontFamily="monospace">
+                {tick.toFixed(1)}ft
+              </text>
+            </g>
+          );
+        })}
         {axisTicks.map(({ p, i }) => {
           const x = toX(i);
           const hour = new Date(p.t).getHours();
           const label = hour === 6 ? "6am" : hour === 12 ? "12pm" : "6pm";
-          const day = new Date(p.t).toLocaleDateString("en-US", { weekday: "short" });
+          const day = dayFmt(p.t);
           return (
             <g key={`tick-${p.t}`}>
               <line x1={x} x2={x} y1={height - 18} y2={height - 10} stroke="rgba(148,163,184,0.35)" strokeWidth="1" />
@@ -69,6 +88,11 @@ export default function WaveForecastChart({ lat, lng }: { lat: number; lng: numb
           );
         })}
         <path d={path} stroke="#38bdf8" strokeWidth="2" fill="none" />
+        {valueLabels.map(({ p, i }) => (
+          <text key={`val-${p.t}`} x={toX(i)} y={toY(p.v) - 6} fill="#94a3b8" fontSize="8" fontFamily="monospace" textAnchor="middle">
+            {p.v.toFixed(1)}ft
+          </text>
+        ))}
         <circle cx={toX(peakIdx)} cy={toY(peak.v)} r="3" fill="#22c55e" />
         <text x={toX(peakIdx) + 4} y={toY(peak.v) - 6} fill="#cbd5e1" fontSize="9" fontFamily="monospace">
           ▲ Peak {peak.v.toFixed(1)}ft {fmt(peak.t)}
