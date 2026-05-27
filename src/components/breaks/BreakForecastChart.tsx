@@ -137,17 +137,6 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-function formatProjectionSummary(rows: ForecastRow[]) {
-  const dawn = rows[0];
-  const morning = rows[1];
-  const afternoon = rows[2];
-  return [
-    `${dawn.label} ${dawn.score ?? "?"}/10`,
-    `${morning.label} ${morning.score ?? "?"}/10`,
-    `${afternoon.label} ${afternoon.score ?? "?"}/10`,
-  ].join(" · ");
-}
-
 export default function BreakForecastChart({ break_, selectedWindow }: Props) {
   const rows = buildRows(break_);
   const [visibleSeries, setVisibleSeries] = useState<Record<SeriesKey, boolean>>({
@@ -169,7 +158,6 @@ export default function BreakForecastChart({ break_, selectedWindow }: Props) {
   const innerHeight = chartHeight - top - bottom;
   const xPositions = [0.15, 0.5, 0.85].map((factor) => left + factor * innerWidth);
   const seriesList = SERIES.filter((series) => visibleSeries[series.key]);
-  const summary = formatProjectionSummary(rows);
 
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
@@ -181,35 +169,6 @@ export default function BreakForecastChart({ break_, selectedWindow }: Props) {
           </div>
         </div>
         <div className="text-[10px] text-slate-500 font-mono">Swell {break_.wave_direction ?? "—"}{break_.period_s ? ` · ${break_.period_s}s` : ""}</div>
-      </div>
-
-      <div className="mt-3 rounded-lg border border-slate-800 bg-slate-950/80 p-2">
-        <div className="grid grid-cols-3 gap-2">
-          {rows.map((row, index) => {
-            const active = index === selectedIndex;
-            return (
-              <div
-                key={row.id}
-                className={`rounded-md border px-2 py-2 text-left transition-colors ${
-                  active ? "border-slate-600 bg-slate-800/90" : "border-slate-800 bg-slate-950/60"
-                }`}
-              >
-                <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500 font-mono">{row.label}</div>
-                <div className="mt-1 flex items-end justify-between gap-2">
-                  <div>
-                    <div className="text-sm font-semibold text-white">{row.score ?? "?"}/10</div>
-                    <div className="text-[10px] text-slate-500">{row.hours}</div>
-                  </div>
-                  <div className="text-[10px] text-slate-400 text-right">
-                    <div>{row.wave_height_ft !== null ? `${row.wave_height_ft}ft` : "—"}{row.period_s ? ` ${row.period_s}s` : ""}</div>
-                    <div>{row.wind_speed_mph !== null ? `${row.wind_speed_mph}mph` : "—"} {row.wind_direction ?? ""}</div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-        <div className="mt-2 text-[10px] text-slate-600 font-mono">Projected daypart banner: {summary}</div>
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">

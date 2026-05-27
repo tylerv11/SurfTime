@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
 
   const now = new Date();
   const end = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-  const params = new URLSearchParams({
+  const baseParams = {
     product: "predictions",
     application: "surftime",
     begin_date: ymd(now),
@@ -21,12 +21,24 @@ export async function GET(req: NextRequest) {
     station,
     time_zone: "lst_ldt",
     units: "english",
-    interval: "h",
     format: "json",
-  });
+  };
 
-  const response = await fetch(`${NOAA_TIDES_URL}?${params.toString()}`, { cache: "no-store" });
-  if (!response.ok) return NextResponse.json({ error: "NOAA request failed" }, { status: 502 });
-  const payload = await response.json();
-  return NextResponse.json({ predictions: payload.predictions ?? [] });
+  const hourlyParams = new URLSearchParams({ ...baseParams, interval: "h" });
+  const hiloParams = new URLSearchParams({ ...baseParams, interval: "hilo" });
+
+  const [hourlyResp, hiloResp] = await Promise.all([
+    fetch(`${NOAA_TIDES_URL}?${hourlyParams.toString()}`, { cache: "no-store" }),
+    fetch(`${NOAA_TIDES_URL}?${hiloParams.toString()}`, { cache: "no-store" }),
+  ]);
+
+  if (!hourlyResp.ok || !hiloResp.ok) {
+    return NextResponse.json({ error: "NOAA request failed" }, { status: 502 });
+  }
+
+  const [hourlyPayload, hiloPayload] = await Promise.all([hourlyResp.json(), hiloResp.json()]);
+  return NextResponse.json({
+    predictions: hourlyPayload.predictions ?? [],
+    highs_lows: hiloPayload.predictions ?? [],
+  });
 }
