@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import BreakMap from "@/components/map/BreakMap";
 import BreakCard from "@/components/breaks/BreakCard";
 
@@ -132,6 +132,8 @@ export default function Home() {
   const [sortBy, setSortBy] = useState<SortBy>("score");
   const [viewerLocation, setViewerLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationPromptDismissed, setLocationPromptDismissed] = useState(false);
+  const [detailOriginView, setDetailOriginView] = useState<"map" | "list">("map");
+  const mobileDetailRef = useRef<HTMLDivElement>(null);
 
   const relativeTime = useRelativeTime(data?.updated_at ?? null);
 
@@ -195,6 +197,11 @@ export default function Home() {
   });
 
   const selectedBreak = sortedBreaks.find((b) => b.break_id === selected) ?? null;
+  useEffect(() => {
+    if (!selected || typeof window === "undefined" || window.innerWidth >= 1024) return;
+    mobileDetailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [selected]);
+
   return (
     <main className="min-h-screen bg-slate-950 text-white flex flex-col">
       {/* Header */}
@@ -431,7 +438,11 @@ export default function Home() {
                     key={b.break_id}
                     break_={b}
                     timeWindow={timeWindow}
-                    onSelect={() => { setSelected(b.break_id); setView("map"); }}
+                    onSelect={() => {
+                      setDetailOriginView("list");
+                      setSelected(b.break_id);
+                      setView("map");
+                    }}
                   />
                 ))}
                 {sortedBreaks.length === 0 && (
@@ -448,7 +459,10 @@ export default function Home() {
                 <BreakMap
                   breaks={sortedBreaks}
                   selected={selected}
-                  onSelect={setSelected}
+                  onSelect={(id) => {
+                    setDetailOriginView("map");
+                    setSelected(id);
+                  }}
                   focusLabel={getRegionLabel(regionFilter)}
                 />
               </div>
@@ -456,9 +470,18 @@ export default function Home() {
               <div className={`lg:basis-1/2 overflow-y-auto bg-slate-950 flex-shrink-0
                 ${!selected ? "hidden lg:flex lg:flex-col" : "flex flex-col"}`}>
                 {selected && selectedBreak ? (
-                  <div className="p-4 flex flex-col gap-3">
+                  <div ref={mobileDetailRef} className="p-4 flex flex-col gap-3">
                     <button
-                      className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 self-start font-mono"
+                      className="lg:hidden sticky top-0 z-10 bg-slate-950/95 backdrop-blur border border-slate-800 rounded-md px-3 py-2 text-xs text-blue-300 hover:text-blue-200 self-start font-mono"
+                      onClick={() => {
+                        setSelected(null);
+                        setView(detailOriginView === "list" ? "list" : "map");
+                      }}
+                    >
+                      {detailOriginView === "list" ? "Go Back to List View" : "Go Back to Map View"}
+                    </button>
+                    <button
+                      className="hidden lg:flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 self-start font-mono"
                       onClick={() => setSelected(null)}
                     >
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -477,7 +500,10 @@ export default function Home() {
                         <BreakCard
                           key={b.break_id}
                           break_={b}
-                          onSelect={() => setSelected(b.break_id)}
+                          onSelect={() => {
+                            setDetailOriginView("map");
+                            setSelected(b.break_id);
+                          }}
                           timeWindow={timeWindow}
                         />
                       ))}

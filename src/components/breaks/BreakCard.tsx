@@ -113,7 +113,7 @@ export default function BreakCard({ break_: b, expanded, onSelect, timeWindow }:
               Methodology · {b.scoring_model ?? "weighted-rules-v1"}
             </div>
             <div className="mt-1 text-[10px] text-slate-400">
-              {b.scoring_method ?? "Deterministic weighted compatibility score (not regression / not R²)."}
+              {b.scoring_method ?? "Deterministic weighted compatibility score (not regression / not R²)."} Chosen because this beach currently uses a rules-first model with stable coverage and no per-beach trained history requirement.
             </div>
             <div className="mt-1 text-[10px] text-slate-500 font-mono">
               Selection criteria: swell height, swell direction match, period quality, wind quality/direction, and tide suitability.
