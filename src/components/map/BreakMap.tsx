@@ -40,6 +40,12 @@ function cardinalToDegrees(dir?: string | null) {
   return dir ? m[dir] : undefined;
 }
 
+function offsetWestByYards(lat: number, lng: number, yards: number) {
+  const meters = yards * 0.9144;
+  const lngDelta = meters / (111320 * Math.cos((lat * Math.PI) / 180));
+  return { lat, lng: lng - lngDelta };
+}
+
 interface Props {
   breaks: BreakCondition[];
   selected: string | null;
@@ -52,6 +58,7 @@ export default function BreakMap({ breaks, selected, onSelect, focusLabel }: Pro
   const mapInstanceRef = useRef<any>(null);
   const leafletRef = useRef<any>(null);
   const markersRef = useRef<Map<string, any>>(new Map());
+  const swellLabelRef = useRef<any>(null);
   const [mapReady, setMapReady] = useState(false);
 
   // Init map once
@@ -103,6 +110,7 @@ export default function BreakMap({ breaks, selected, onSelect, focusLabel }: Pro
       mapInstanceRef.current?.remove();
       mapInstanceRef.current = null;
       markersRef.current = new Map();
+      swellLabelRef.current = null;
       leafletRef.current = null;
       setMapReady(false);
     };
@@ -170,6 +178,60 @@ export default function BreakMap({ breaks, selected, onSelect, focusLabel }: Pro
       else marker.closePopup();
     });
   }, [breaks, selected, onSelect]);
+
+  useEffect(() => {
+    const L = leafletRef.current;
+    const map = mapInstanceRef.current;
+    if (!L || !map) return;
+
+    if (!selected) {
+      if (swellLabelRef.current) {
+        map.removeLayer(swellLabelRef.current);
+        swellLabelRef.current = null;
+      }
+      return;
+    }
+
+    const brk = breaks.find((b) => b.break_id === selected);
+    const swellDeg = cardinalToDegrees(brk?.wave_direction);
+    if (!brk || swellDeg === undefined) {
+      if (swellLabelRef.current) {
+        map.removeLayer(swellLabelRef.current);
+        swellLabelRef.current = null;
+      }
+      return;
+    }
+
+    const anchor = offsetWestByYards(brk.lat, brk.lng, 800);
+    const html = `
+      <div style="display:flex;align-items:center;gap:6px;padding:4px 7px;border-radius:8px;background:rgba(15,23,42,0.88);border:1px solid rgba(148,163,184,0.35);color:#cbd5e1;font:11px/1.2 monospace;white-space:nowrap;">
+        <span style="display:inline-block;transform:rotate(${swellDeg}deg);transform-origin:50% 50%;font-size:14px;">↑</span>
+        <span>Swell direction</span>
+      </div>
+    `;
+
+    if (!swellLabelRef.current) {
+      swellLabelRef.current = L.marker([anchor.lat, anchor.lng], {
+        interactive: false,
+        icon: L.divIcon({
+          className: "",
+          html,
+          iconSize: [148, 24],
+          iconAnchor: [0, 12],
+        }),
+      }).addTo(map);
+    } else {
+      swellLabelRef.current.setLatLng([anchor.lat, anchor.lng]);
+      swellLabelRef.current.setIcon(
+        L.divIcon({
+          className: "",
+          html,
+          iconSize: [148, 24],
+          iconAnchor: [0, 12],
+        })
+      );
+    }
+  }, [breaks, selected]);
 
   // Pan to selected break
   useEffect(() => {

@@ -9,7 +9,7 @@ from typing import Optional
 
 NWS_FORECAST_URL = "https://api.weather.gov/gridpoints/{office}/{x},{y}/forecast/hourly"
 
-TIME_WINDOW_HOURS = {"early_morning": 6, "morning": 10, "afternoon": 14}
+TIME_WINDOW_HOURS = {"early_morning": 6, "morning": 10, "afternoon": 13}
 
 
 def fetch_wind(office: str, x: int, y: int) -> dict:
