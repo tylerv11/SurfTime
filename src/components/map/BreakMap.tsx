@@ -65,7 +65,7 @@ export default function BreakMap({ breaks, selected, onSelect, focusLabel }: Pro
         zoomControl: true,
       });
 
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
         attribution:
           '© <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors © <a href="https://carto.com">CARTO</a>',
         maxZoom: 19,

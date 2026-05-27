@@ -1,6 +1,7 @@
 "use client";
 
 import { BreakCondition, TimeWindow } from "@/app/page";
+import BreakForecastChart from "@/components/breaks/BreakForecastChart";
 
 const RATING_COLOR: Record<string, string> = {
   epic:              "text-purple-400 bg-purple-500/10 border-purple-500/30",
@@ -128,42 +129,10 @@ export default function BreakCard({ break_: b, expanded, onSelect, timeWindow }:
         </p>
       )}
 
-      {/* Expanded time window breakdown */}
-      {expanded && hasWindows && windows && (
+      {/* Forecast chart (expanded) */}
+      {expanded && (
         <div className="mt-3 pt-3 border-t border-slate-800">
-          <p className="text-[10px] text-slate-600 font-mono uppercase tracking-wide mb-2">Forecast by time</p>
-          <div className="grid grid-cols-3 gap-2">
-            {(["early_morning", "morning", "afternoon"] as TimeWindow[]).map((wid) => {
-              const win = windows[wid];
-              if (!win) return null;
-              const active = timeWindow === wid;
-              const activeDot = RATING_DOT[win.rating] ?? "bg-slate-600";
-              return (
-                <div
-                  key={wid}
-                  className={`rounded-sm p-2 text-center border font-mono ${
-                    active ? "bg-slate-800 border-slate-600" : "bg-slate-900/50 border-slate-800"
-                  }`}
-                >
-                  <div className="text-[9px] text-slate-500 uppercase tracking-wide mb-1">{WINDOW_LABELS[wid]}</div>
-                  <div className="flex items-center justify-center gap-1 mb-0.5">
-                    <div className={`w-1.5 h-1.5 rounded-full ${activeDot}`} />
-                    <span className={`font-bold text-sm ${active ? "text-white" : "text-slate-300"}`}>{win.score}/10</span>
-                  </div>
-                  <div className="text-[10px] text-slate-500 capitalize">{win.rating === "flat-or-blown" ? "blown" : win.rating}</div>
-                  <div className="text-[9px] text-slate-600 mt-1">{win.wind_speed_mph}mph {win.wind_direction}</div>
-                  <div className="text-[9px] text-slate-600 capitalize">{win.tide_stage} tide</div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Water temp (expanded) */}
-      {expanded && b.water_temp_f && (
-        <div className="mt-2 text-xs font-mono text-slate-500">
-          Water temp: <span className="text-slate-300">{b.water_temp_f}°F</span>
+          <BreakForecastChart break_={b} selectedWindow={timeWindow} />
         </div>
       )}
     </div>
