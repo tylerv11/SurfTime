@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { BreakCondition, TimeWindow } from "@/app/page";
 
 type SeriesKey = "score" | "wind" | "wave" | "tide" | "temp";
@@ -36,10 +36,10 @@ interface Props {
   selectedWindow?: TimeWindow;
 }
 
-const WINDOW_ORDER: { id: DaypartWindow; label: string; hours: string }[] = [
-  { id: "early_morning", label: "Dawn", hours: "5-8am" },
-  { id: "morning", label: "8-12pm", hours: "8am-12pm" },
-  { id: "afternoon", label: "12-3pm", hours: "12-3pm" },
+const WINDOW_ORDER: { id: DaypartWindow; label: string; hours: string; targetHour: number; axisLabel: string }[] = [
+  { id: "early_morning", label: "Dawn", hours: "5-8am", targetHour: 6, axisLabel: "6am (Dawn)" },
+  { id: "morning", label: "Morning", hours: "8am-12pm", targetHour: 10, axisLabel: "10am" },
+  { id: "afternoon", label: "Afternoon", hours: "12-3pm", targetHour: 13, axisLabel: "1pm" },
 ];
 
 const SERIES: SeriesConfig[] = [
@@ -100,7 +100,7 @@ const SERIES: SeriesConfig[] = [
   },
 ];
 
-function buildRows(b: BreakCondition): ForecastRow[] {
+function buildRows(b: BreakCondition, waveByWindow: Partial<Record<DaypartWindow, number>>): ForecastRow[] {
   return WINDOW_ORDER.map((window) => {
     const win = b.time_windows?.[window.id];
     return {
@@ -110,7 +110,7 @@ function buildRows(b: BreakCondition): ForecastRow[] {
       score: win?.score ?? b.score,
       wind_speed_mph: win?.wind_speed_mph ?? b.wind_speed_mph ?? null,
       wind_direction: win?.wind_direction ?? b.wind_direction ?? null,
-      wave_height_ft: b.wave_height_ft,
+      wave_height_ft: waveByWindow[window.id] ?? b.wave_height_ft,
       period_s: b.period_s,
       wave_direction: b.wave_direction,
       tide_stage: win?.tide_stage ?? b.tide_stage ?? null,
@@ -139,7 +139,8 @@ function clamp(value: number, min: number, max: number) {
 }
 
 export default function BreakForecastChart({ break_, selectedWindow }: Props) {
-  const rows = buildRows(break_);
+  const [waveByWindow, setWaveByWindow] = useState<Partial<Record<DaypartWindow, number>>>({});
+  const rows = buildRows(break_, waveByWindow);
   const tempValues = rows
     .map((row) => row.air_temp_f ?? row.water_temp_f)
     .filter((value): value is number => value !== null);
@@ -168,6 +169,28 @@ export default function BreakForecastChart({ break_, selectedWindow }: Props) {
   });
   const togglableSeries = SERIES.filter((series) => !(series.key === "temp" && !hasVaryingTemp));
 
+  useEffect(() => {
+    fetch(`/api/waves?lat=${break_.lat}&lng=${break_.lng}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const points = (d.points ?? []) as Array<{ t: string; v: number }>;
+        if (!points.length) return;
+        const now = new Date();
+        const byWindow: Partial<Record<DaypartWindow, number>> = {};
+        for (const window of WINDOW_ORDER) {
+          let best: { diff: number; v: number } | null = null;
+          for (const p of points) {
+            const dt = new Date(p.t);
+            const diff = Math.abs((dt.getTime() - new Date(now.getFullYear(), now.getMonth(), now.getDate(), window.targetHour).getTime()) / 3600000);
+            if (!best || diff < best.diff) best = { diff, v: p.v };
+          }
+          if (best) byWindow[window.id] = best.v;
+        }
+        setWaveByWindow(byWindow);
+      })
+      .catch(() => {});
+  }, [break_.lat, break_.lng]);
+
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -175,7 +198,7 @@ export default function BreakForecastChart({ break_, selectedWindow }: Props) {
           <div className="text-[10px] uppercase tracking-[0.22em] text-cyan-400/70 font-mono">Future Projection Forecast</div>
           <div className="text-[10px] uppercase tracking-[0.22em] text-slate-500 font-mono">Forecast by daypart</div>
           <div className="text-[11px] text-slate-600 mt-1">
-            These values are projections from the current forecast inputs, not historical readings.
+            We forecast each time slot from marine wave model + NOAA tide + NWS wind, then score with weighted suitability rules.
           </div>
         </div>
         <div className="text-[10px] text-slate-500 font-mono">
@@ -279,7 +302,7 @@ export default function BreakForecastChart({ break_, selectedWindow }: Props) {
                 fontFamily="monospace"
                 textAnchor="middle"
               >
-                {row.label}
+                {WINDOW_ORDER[index].axisLabel}
               </text>
             </g>
           ))}
