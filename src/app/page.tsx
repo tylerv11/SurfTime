@@ -107,6 +107,26 @@ function formatAbsoluteTime(isoString: string | null): string {
   });
 }
 
+function getNearestBreak(
+  breaks: BreakCondition[],
+  viewer: { lat: number; lng: number }
+): BreakCondition | null {
+  if (!breaks.length) return null;
+  const toRad = (value: number) => (value * Math.PI) / 180;
+  const r = 6371;
+  const distanceKm = (b: BreakCondition) => {
+    const dLat = toRad(b.lat - viewer.lat);
+    const dLng = toRad(b.lng - viewer.lng);
+    const lat1 = toRad(viewer.lat);
+    const lat2 = toRad(b.lat);
+    const h =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+    return 2 * r * Math.asin(Math.sqrt(h));
+  };
+  return [...breaks].sort((a, b) => distanceKm(a) - distanceKm(b))[0] ?? null;
+}
+
 export function getBreakForWindow(b: BreakCondition, window: TimeWindow): BreakCondition {
   const win = b.time_windows?.[window];
   if (!win) return b;
@@ -148,6 +168,25 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem("surftime_viewer_location");
+    if (!saved) return;
+    try {
+      const parsed = JSON.parse(saved) as { lat: number; lng: number };
+      if (typeof parsed.lat === "number" && typeof parsed.lng === "number") {
+        setViewerLocation(parsed);
+      }
+    } catch {
+      // ignore malformed cache
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !viewerLocation) return;
+    window.localStorage.setItem("surftime_viewer_location", JSON.stringify(viewerLocation));
+  }, [viewerLocation]);
+
+  useEffect(() => {
     fetchData();
     const id = setInterval(() => fetchData(true), 10 * 60 * 1000);
     return () => clearInterval(id);
@@ -157,16 +196,21 @@ export default function Home() {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setViewerLocation({
+        const nextLocation = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
-        });
+        };
+        setViewerLocation(nextLocation);
         setLocationPromptDismissed(true);
+        const currentBreaks = (data?.breaks ?? []).map((b) => getBreakForWindow(b, timeWindow));
+        const nearest = getNearestBreak(currentBreaks, nextLocation);
+        if (nearest?.region) setRegionFilter(nearest.region);
+        setSortBy("score");
       },
       () => {},
       { maximumAge: 30 * 60 * 1000, timeout: 5000 }
     );
-  }, []);
+  }, [data?.breaks, timeWindow]);
 
   function distanceKm(a: BreakCondition) {
     if (!viewerLocation) return Number.POSITIVE_INFINITY;
