@@ -20,16 +20,22 @@ const RATING_LABEL: Record<string, string> = {
   "flat-or-blown": "Flat / Blown",
 };
 
-function markerHtml(color: string, size: number, isSelected: boolean, rating: string) {
+function markerHtml(color: string, size: number, isSelected: boolean, rating: string, score: number | null) {
+  const glowSize = isSelected ? 22 : 12;
   const glow =
     rating === "epic" || rating === "good"
-      ? `box-shadow:0 0 ${isSelected ? 18 : 10}px ${color},0 0 4px rgba(0,0,0,0.8);`
-      : `box-shadow:0 0 6px rgba(0,0,0,0.6);`;
+      ? `box-shadow:0 0 ${glowSize}px ${color},0 0 5px rgba(0,0,0,0.9);`
+      : isSelected
+        ? `box-shadow:0 0 14px ${color},0 0 5px rgba(0,0,0,0.9);`
+        : `box-shadow:0 0 7px rgba(0,0,0,0.7);`;
   const border = isSelected
-    ? "border:3px solid white;"
-    : "border:2px solid rgba(255,255,255,0.55);";
+    ? "border:2.5px solid white;"
+    : "border:2px solid rgba(255,255,255,0.5);";
   const pulse = rating === "epic" && !isSelected ? "animation:surf-pulse 2s infinite;" : "";
-  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};${border}${glow}${pulse}cursor:pointer;transition:all 0.15s;"></div>`;
+  const scoreText = score !== null
+    ? `<span style="font-size:${isSelected ? 11 : 8}px;font-family:monospace;font-weight:bold;color:white;text-shadow:0 1px 3px rgba(0,0,0,0.9);line-height:1;pointer-events:none;">${score}</span>`
+    : "";
+  return `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};${border}${glow}${pulse}cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;">${scoreText}</div>`;
 }
 
 function cardinalToDegrees(dir?: string | null) {
@@ -134,7 +140,7 @@ export default function BreakMap({ breaks, selected, onSelect, focusLabel }: Pro
     breaks.forEach((b) => {
       const isSelected = b.break_id === selected;
       const color = RATING_HEX[b.rating] ?? "#64748b";
-      const size = isSelected ? 20 : 14;
+      const size = isSelected ? 32 : 20;
 
       let marker = markersRef.current.get(b.break_id);
       if (!marker) {
@@ -150,7 +156,7 @@ export default function BreakMap({ breaks, selected, onSelect, focusLabel }: Pro
       marker.setIcon(
         L.divIcon({
           className: "",
-          html: `${markerHtml(color, size, isSelected, b.rating)}${
+          html: `${markerHtml(color, size, isSelected, b.rating, b.score)}${
             isSelected && cardinalToDegrees(b.wave_direction) !== undefined
               ? `<div style="position:relative;left:${size / 2}px;top:-${size + 12}px;transform:translateX(-50%) rotate(${cardinalToDegrees(b.wave_direction)}deg);transform-origin:50% 85%;font-size:14px;color:#e2e8f0;text-shadow:0 1px 3px rgba(0,0,0,0.8)">↑</div>`
               : ""

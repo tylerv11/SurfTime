@@ -289,7 +289,7 @@ export default function Home() {
   }, [selected]);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white flex flex-col">
+    <main className="min-h-screen bg-transparent text-white flex flex-col">
       {/* Header */}
       <header className="px-4 py-3 border-b border-slate-800 flex items-center justify-between flex-shrink-0 bg-slate-950/95 backdrop-blur z-10">
         <div className="flex items-center gap-3 min-w-0">
@@ -301,7 +301,7 @@ export default function Home() {
  \\_o_o_o_/`}
           </pre>
           <div className="min-w-0">
-            <h1 className="text-base font-bold tracking-tight leading-none font-mono">SurfTime</h1>
+            <h1 className="text-base font-bold tracking-tight leading-none font-mono bg-gradient-to-r from-teal-300 via-cyan-300 to-blue-400 bg-clip-text text-transparent">SurfTime</h1>
             <p className="text-[11px] text-slate-500 leading-none mt-0.5 hidden sm:block tracking-[0.22em] uppercase">
               California Surf Conditions
             </p>
@@ -357,11 +357,57 @@ export default function Home() {
       </header>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center flex-1 gap-4">
-          <pre className="text-blue-500/40 text-[10px] leading-tight font-mono select-none text-center">
-            {`   ~  ~~~  ~  ~~~  ~\n  )))  loading  (((\n   ~  ~~~  ~  ~~~  ~`}
-          </pre>
-          <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Filter bar skeleton */}
+          <div className="px-4 py-2.5 border-b border-slate-800 bg-slate-950/60 flex items-center gap-2 flex-shrink-0 flex-wrap">
+            {[72, 58, 72, 52, 78].map((w, i) => (
+              <div key={i} className="h-6 bg-slate-800 rounded-sm animate-pulse" style={{ width: w }} />
+            ))}
+            <div className="ml-auto flex items-center gap-2">
+              {[64, 68, 72, 60].map((w, i) => (
+                <div key={i} className="h-6 bg-slate-800 rounded-sm animate-pulse" style={{ width: w }} />
+              ))}
+            </div>
+          </div>
+          {/* Card grid skeleton */}
+          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 overflow-y-auto">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="rounded-xl bg-slate-900/80 border border-slate-800 p-3 animate-pulse"
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                {/* Header row */}
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full bg-slate-700 flex-shrink-0" />
+                      <div className="h-3.5 bg-slate-700 rounded w-28" />
+                    </div>
+                    <div className="h-2.5 bg-slate-800 rounded w-16 ml-3.5" />
+                    <div className="h-5 bg-slate-800 rounded w-12 ml-3.5" />
+                  </div>
+                  {/* Score gauge placeholder */}
+                  <div className="w-10 h-10 rounded-full bg-slate-800 flex-shrink-0" />
+                </div>
+                {/* Conditions grid */}
+                <div className="grid grid-cols-3 gap-2">
+                  {[...Array(3)].map((_, j) => (
+                    <div key={j} className="space-y-1.5">
+                      <div className="h-2 bg-slate-800 rounded w-8" />
+                      <div className="h-3 bg-slate-700 rounded" />
+                      <div className="h-1 bg-slate-800 rounded-full" />
+                    </div>
+                  ))}
+                </div>
+                {/* Briefing lines */}
+                <div className="mt-2.5 space-y-1.5">
+                  <div className="h-2.5 bg-slate-800 rounded w-full" />
+                  <div className="h-2.5 bg-slate-800 rounded w-4/5" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : !data ? (
         <div className="flex flex-col items-center justify-center flex-1 gap-3">

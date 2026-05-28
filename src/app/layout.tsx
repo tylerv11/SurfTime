@@ -50,7 +50,13 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-[#050a14]">
+        {/* Ambient ocean gradient blobs — fixed, behind all content */}
+        <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden" aria-hidden="true">
+          <div className="absolute -top-48 left-1/4 w-[600px] h-[500px] rounded-full bg-teal-500/[0.045] blur-[140px]" />
+          <div className="absolute -top-24 right-0 w-[450px] h-[400px] rounded-full bg-blue-700/[0.055] blur-[120px]" />
+          <div className="absolute bottom-1/3 -left-24 w-[350px] h-[350px] rounded-full bg-cyan-600/[0.03] blur-[100px]" />
+        </div>
         {children}
         <Analytics />
       </body>
