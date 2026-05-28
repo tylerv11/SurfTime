@@ -49,6 +49,10 @@ export async function GET() {
     };
   });
 
+  // Most recent conditions row updated_at is the authoritative "last pull" time
+  // (data is already ordered by updated_at DESC, so data[0] is the freshest row)
+  const conditionsUpdatedAt = data.length > 0 ? (data[0] as Record<string, unknown>).updated_at as string | null : null;
+
   // Get latest daily summary
   const { data: summaryData } = await supabase
     .from("daily_summaries")
@@ -60,6 +64,6 @@ export async function GET() {
   return NextResponse.json({
     breaks,
     daily_summary: summaryData?.summary ?? null,
-    updated_at: summaryData?.updated_at ?? null,
+    updated_at: conditionsUpdatedAt ?? summaryData?.updated_at ?? null,
   });
 }
