@@ -496,17 +496,21 @@ export default function Home() {
 
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-[10px] text-slate-600 uppercase tracking-wide">Time</span>
-                {TIME_WINDOWS.map((window) => (
+                {TIME_WINDOWS.map((w) => (
                   <button
-                    key={window.id}
-                    onClick={() => setTimeWindow(window.id)}
-                    className={`text-xs px-3 py-1 rounded-sm border font-mono transition-colors ${
-                      timeWindow === window.id
+                    key={w.id}
+                    onClick={() => setTimeWindow(w.id)}
+                    className={`relative flex flex-col items-center px-3 py-1.5 rounded-sm border font-mono transition-colors leading-none ${
+                      timeWindow === w.id
                         ? "bg-slate-700 border-slate-600 text-white"
                         : "bg-slate-900 border-slate-800 text-slate-500 hover:text-white"
                     }`}
                   >
-                    {window.label}
+                    <span className="text-xs">{w.label}</span>
+                    <span className="text-[9px] text-slate-500 mt-0.5">{w.hours}</span>
+                    {timeWindow === w.id && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-teal-400 rounded-full" />
+                    )}
                   </button>
                 ))}
                 <span className="text-[10px] text-slate-600 ml-1">{sortedBreaks.length} spots</span>
@@ -536,18 +540,21 @@ export default function Home() {
                 </div>
               <div className="flex items-center gap-1.5">
                 <span className="text-[10px] text-slate-600 uppercase tracking-wide">Time</span>
-                {TIME_WINDOWS.map((window) => (
+                {TIME_WINDOWS.map((w) => (
                   <button
-                    key={window.id}
-                    onClick={() => setTimeWindow(window.id)}
-                    className={`text-xs px-2.5 py-1 rounded-sm border font-mono transition-colors ${
-                      timeWindow === window.id
+                    key={w.id}
+                    onClick={() => setTimeWindow(w.id)}
+                    className={`relative flex flex-col items-center px-2.5 py-1.5 rounded-sm border font-mono transition-colors leading-none ${
+                      timeWindow === w.id
                         ? "bg-slate-700 border-slate-600 text-white"
                         : "bg-slate-900 border-slate-800 text-slate-500 hover:text-white"
                     }`}
-                    title={window.hours}
                   >
-                    {window.label}
+                    <span className="text-xs">{w.label}</span>
+                    <span className="text-[9px] text-slate-500 mt-0.5">{w.hours}</span>
+                    {timeWindow === w.id && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-teal-400 rounded-full" />
+                    )}
                   </button>
                 ))}
                 <span className="text-[10px] text-slate-600 uppercase tracking-wide">Sort</span>

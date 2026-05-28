@@ -41,6 +41,15 @@ const GAUGE_COLOR: Record<string, string> = {
   error:           "#475569",
 };
 
+const RATING_BORDER_COLOR: Record<string, string> = {
+  epic:            "rgba(167,139,250,0.55)",
+  good:            "rgba(45,212,191,0.45)",
+  fair:            "rgba(251,191,36,0.38)",
+  poor:            "rgba(249,115,22,0.32)",
+  "flat-or-blown": "rgba(239,68,68,0.28)",
+  error:           "rgba(71,85,105,0.28)",
+};
+
 const REGION_LABEL: Record<string, string> = {
   sd:      "San Diego",
   oc:      "Orange Co.",
@@ -96,6 +105,7 @@ export default function BreakCard({ break_: b, expanded, onSelect, timeWindow }:
   const dot = RATING_DOT[b.rating] ?? "bg-slate-500";
   const badge = RATING_COLOR[b.rating] ?? RATING_COLOR.error;
   const glow = RATING_GLOW[b.rating] ?? "";
+  const leftBorderColor = RATING_BORDER_COLOR[b.rating] ?? RATING_BORDER_COLOR.error;
 
   const waveBarPct = b.wave_height_ft !== null
     ? Math.min((b.wave_height_ft / 10) * 100, 100)
@@ -113,6 +123,7 @@ export default function BreakCard({ break_: b, expanded, onSelect, timeWindow }:
         transition-all duration-200 backdrop-blur-sm
         ${onSelect ? `cursor-pointer ${glow} active:scale-[0.99]` : ""}
       `}
+      style={{ borderLeftWidth: "3px", borderLeftColor: leftBorderColor }}
       onClick={onSelect}
     >
       {/* Header */}
@@ -123,7 +134,7 @@ export default function BreakCard({ break_: b, expanded, onSelect, timeWindow }:
             <h2 className="font-semibold text-sm leading-tight truncate">{b.break_name}</h2>
           </div>
           {b.region && (
-            <p className="text-[10px] text-slate-500 font-mono ml-3.5 mt-0.5 uppercase tracking-wide">
+            <p className="text-[10px] text-slate-500 ml-3.5 mt-0.5 uppercase tracking-widest">
               {REGION_LABEL[b.region] ?? b.region}
             </p>
           )}
@@ -136,11 +147,11 @@ export default function BreakCard({ break_: b, expanded, onSelect, timeWindow }:
       </div>
 
       {/* Conditions grid */}
-      <div className="grid grid-cols-3 gap-x-2 gap-y-2 text-[11px] text-slate-400 font-mono">
+      <div className="grid grid-cols-3 gap-x-2 gap-y-2 text-[11px] text-slate-400">
         {/* Wave */}
         <div>
-          <div className="text-[9px] text-slate-600 uppercase tracking-wide mb-0.5">Wave</div>
-          <div className="text-slate-300">
+          <div className="text-[9px] text-slate-600 uppercase tracking-widest mb-0.5">Wave</div>
+          <div className="text-slate-300 font-mono">
             {b.wave_height_ft !== null ? `${b.wave_height_ft}ft` : "—"}
             {b.period_s ? <span className="text-slate-500"> {b.period_s}s</span> : null}
           </div>
@@ -155,8 +166,8 @@ export default function BreakCard({ break_: b, expanded, onSelect, timeWindow }:
 
         {/* Wind */}
         <div>
-          <div className="text-[9px] text-slate-600 uppercase tracking-wide mb-0.5">Wind</div>
-          <div className="truncate text-slate-300">
+          <div className="text-[9px] text-slate-600 uppercase tracking-widest mb-0.5">Wind</div>
+          <div className="truncate text-slate-300 font-mono">
             {b.wind_speed_mph ? `${b.wind_speed_mph}mph` : "—"}
             {b.wind_direction ? <span className="text-slate-500"> {b.wind_direction}</span> : null}
           </div>
@@ -164,8 +175,8 @@ export default function BreakCard({ break_: b, expanded, onSelect, timeWindow }:
 
         {/* Tide */}
         <div>
-          <div className="text-[9px] text-slate-600 uppercase tracking-wide mb-0.5">Tide</div>
-          <div className="capitalize text-slate-300">{b.tide_stage ?? "—"}</div>
+          <div className="text-[9px] text-slate-600 uppercase tracking-widest mb-0.5">Tide</div>
+          <div className="capitalize text-slate-300 font-mono">{b.tide_stage ?? "—"}</div>
         </div>
       </div>
 
